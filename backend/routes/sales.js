@@ -105,14 +105,15 @@ router.get('/summary', async (req, res) => {
         SUM(total_amount) as total_revenue,
         AVG(total_amount) as average_ticket,
         SUM(total_discount) as total_discounts,
-        SUM(delivery_fee) as total_delivery_fees
+        SUM(delivery_fee) as total_delivery_fees,
+        (SELECT COUNT(*) FROM stores WHERE brand_id = $1 AND name LIKE '%Maria%') as total_stores
       FROM sales s
       LEFT JOIN stores st ON s.store_id = st.id
       WHERE s.sale_status_desc = 'COMPLETED'
     `;
     
-    const params = [];
-    let paramCount = 1;
+    const params = [brand_id || 1]; // Usar brand_id fornecido ou 1 como padrão
+    let paramCount = 2; // Começar do 2 pois $1 já é usado na subconsulta
     
     if (brand_id) {
       query += ` AND st.brand_id = $${paramCount}`;

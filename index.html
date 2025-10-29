@@ -229,19 +229,6 @@
             font-weight: 500;
         }
 
-        .metric-change {
-            font-size: 0.9rem;
-            margin-top: 5px;
-            font-weight: 600;
-        }
-
-        .metric-change.positive {
-            color: #27ae60;
-        }
-
-        .metric-change.negative {
-            color: #e74c3c;
-        }
 
         .cards {
             display: grid;
@@ -276,13 +263,18 @@
             width: 100%;
             border-collapse: collapse;
             margin-top: 15px;
+            table-layout: fixed;
+            word-wrap: break-word;
         }
 
         .table th,
         .table td {
-            padding: 12px;
+            padding: 12px 8px;
             text-align: left;
             border-bottom: 1px solid #e1e8ed;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .table th {
@@ -300,6 +292,22 @@
 
         .table tbody tr:nth-child(even) {
             background: #fafbfc;
+        }
+
+        /* Colunas específicas para performance por loja */
+        .table .store-name {
+            width: 30%;
+            white-space: normal;
+            word-wrap: break-word;
+        }
+
+        .table .store-location {
+            width: 25%;
+        }
+
+        .table .store-metric {
+            width: 15%;
+            text-align: right;
         }
 
         .hidden {
@@ -393,22 +401,18 @@
             <div class="metric-card">
                 <div class="metric-value" id="totalRevenue">R$ 0,00</div>
                 <div class="metric-label">Receita Total</div>
-                <div class="metric-change positive" id="revenueChange">+0%</div>
             </div>
             <div class="metric-card">
                 <div class="metric-value" id="totalSales">0</div>
                 <div class="metric-label">Total de Vendas</div>
-                <div class="metric-change positive" id="salesChange">+0%</div>
             </div>
             <div class="metric-card">
                 <div class="metric-value" id="averageTicket">R$ 0,00</div>
                 <div class="metric-label">Ticket Médio</div>
-                <div class="metric-change positive" id="ticketChange">+0%</div>
             </div>
             <div class="metric-card">
                 <div class="metric-value" id="totalStores">0</div>
                 <div class="metric-label">Lojas Ativas</div>
-                <div class="metric-change positive" id="storesChange">+0%</div>
             </div>
         </div>
 
@@ -635,8 +639,9 @@
         }
 
         function updateMetrics(summary) {
-            if (summary && summary.length > 0) {
-                const data = summary[0];
+            if (summary) {
+                // A API retorna um objeto direto, não um array
+                const data = Array.isArray(summary) ? summary[0] : summary;
                 document.getElementById('totalRevenue').textContent = formatCurrency(data.total_revenue || 0);
                 document.getElementById('totalSales').textContent = formatNumber(data.total_sales || 0);
                 document.getElementById('averageTicket').textContent = formatCurrency(data.average_ticket || 0);
@@ -657,9 +662,9 @@
                 products.forEach((product, index) => {
                     const row = tbody.insertRow();
                     row.innerHTML = `
-                        <td><strong>${index + 1}.</strong> ${product.product_name || 'Produto'}</td>
-                        <td>${formatNumber(product.sales_count || 0)}</td>
-                        <td>${formatCurrency(product.revenue || 0)}</td>
+                        <td class="store-name"><strong>${index + 1}.</strong> ${product.product_name || 'Produto'}</td>
+                        <td class="store-metric">${formatNumber(parseInt(product.sales_count) || 0)}</td>
+                        <td class="store-metric">${formatCurrency(product.total_revenue || 0)}</td>
                     `;
                 });
             }
@@ -673,10 +678,10 @@
                 channels.forEach(channel => {
                     const row = tbody.insertRow();
                     row.innerHTML = `
-                        <td>${channel.channel_name || 'Canal'}</td>
-                        <td>${formatNumber(channel.sales_count || 0)}</td>
-                        <td>${formatCurrency(channel.revenue || 0)}</td>
-                        <td>${formatCurrency(channel.average_ticket || 0)}</td>
+                        <td class="store-name">${channel.channel_name || 'Canal'}</td>
+                        <td class="store-metric">${formatNumber(parseInt(channel.sales_count) || 0)}</td>
+                        <td class="store-metric">${formatCurrency(channel.revenue || 0)}</td>
+                        <td class="store-metric">${formatCurrency(channel.average_ticket || 0)}</td>
                     `;
                 });
             }
@@ -690,13 +695,13 @@
                 stores.forEach((store, index) => {
                     const row = tbody.insertRow();
                     row.innerHTML = `
-                        <td>
+                        <td class="store-name">
                             <strong>${index + 1}.</strong> ${store.store_name}
                         </td>
-                        <td>${store.city} - ${store.state}</td>
-                        <td>${formatNumber(store.sales_count)}</td>
-                        <td>${formatCurrency(store.revenue)}</td>
-                        <td>${formatCurrency(store.average_ticket)}</td>
+                        <td class="store-location">${store.city} - ${store.state}</td>
+                        <td class="store-metric">${formatNumber(store.sales_count)}</td>
+                        <td class="store-metric">${formatCurrency(store.revenue)}</td>
+                        <td class="store-metric">${formatCurrency(store.average_ticket)}</td>
                     `;
                 });
             } else {
@@ -712,7 +717,7 @@
             }
             
             const labels = products.map(p => p.product_name || 'Produto').slice(0, 5);
-            const data = products.map(p => p.sales_count || 0).slice(0, 5);
+            const data = products.map(p => parseInt(p.sales_count) || 0).slice(0, 5);
             
             productsChart = new Chart(ctx, {
                 type: 'doughnut',

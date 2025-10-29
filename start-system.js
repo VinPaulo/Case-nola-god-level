@@ -118,18 +118,33 @@ async function startSystem() {
         await execAsync('docker-compose up -d postgres');
         
         // Aguardar banco estar pronto
-        await waitForService('http://localhost:3000/api/health', 'Banco de Dados', 15);
+        log('⏳ Aguardando PostgreSQL estar pronto...', 'blue');
+        await sleep(10000); // Aguardar 10 segundos para o PostgreSQL inicializar
         
-        // Executar gerador de dados
-        log('📈 Executando gerador de dados...', 'blue');
-        await execAsync('docker-compose run --rm data-generator');
+        // Verificar se já existem dados no banco
+        log('🔍 Verificando se já existem dados no banco...', 'blue');
+        try {
+            const { execSync } = require('child_process');
+            const result = execSync('docker-compose exec -T postgres psql -U challenge -d challenge_db -c "SELECT COUNT(*) FROM sales;"', { encoding: 'utf8' });
+            const salesCount = parseInt(result.trim().split('\n')[2]);
+            
+            if (salesCount > 0) {
+                log(`✅ Banco já possui ${salesCount} vendas - pulando geração de dados`, 'green');
+            } else {
+                log('📈 Executando gerador de dados...', 'blue');
+                await execAsync('docker-compose run --rm data-generator');
+            }
+        } catch (error) {
+            log('⚠️ Não foi possível verificar dados existentes - executando gerador de dados...', 'yellow');
+            await execAsync('docker-compose run --rm data-generator');
+        }
         
         // Subir API
         log('🔧 Iniciando API...', 'blue');
         await execAsync('docker-compose up -d api');
         
         // Aguardar API estar pronta
-        await waitForService('http://localhost:3000/api/health', 'API', 15);
+        await waitForService('http://localhost:3000/api/health', 'API', 30);
         
         // Instalar dependências do frontend se necessário
         if (!require('fs').existsSync('node_modules')) {
@@ -145,7 +160,7 @@ async function startSystem() {
         });
         
         // Aguardar frontend estar pronto
-        await waitForService('http://localhost:3001', 'Frontend', 10);
+        await waitForService('http://localhost:3001', 'Frontend', 20);
         
         log('\n🎉 Sistema iniciado com sucesso!', 'green');
         log('\n📊 Dashboard: http://localhost:3001', 'blue');
