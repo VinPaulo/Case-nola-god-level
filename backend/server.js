@@ -7,6 +7,7 @@ const analyticsRoutes = require('./routes/analytics');
 const brandsRoutes = require('./routes/brands');
 
 const app = express();
+const { cache } = require('./utils/cache');
 const PORT = process.env.PORT || 3000;
 
 // Middleware
@@ -14,6 +15,16 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
+// Cache agressivo nas rotas pesadas (TTL em segundos)
+app.use('/api/analytics/product-margins', cache(60));
+app.use('/api/analytics/delivery-performance', cache(60));
+app.use('/api/analytics/customer-retention', cache(60));
+app.use('/api/analytics/anomalies', cache(60));
+app.use('/api/analytics/revenue-by-channel', cache(30));
+app.use('/api/analytics/top-products', cache(30));
+app.use('/api/analytics/maria-stores', cache(30));
+app.use('/api/sales/summary', cache(30));
+
 app.use('/api/sales', salesRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/brands', brandsRoutes);

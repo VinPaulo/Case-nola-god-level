@@ -473,6 +473,74 @@
                     </tbody>
                 </table>
             </div>
+
+            <div class="card" id="marginsCard" style="display: none;">
+                <h3>💰 Produtos com Menor Margem</h3>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Produto</th>
+                            <th>Preço Médio</th>
+                            <th>Margem %</th>
+                            <th>Lucro Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="marginsTableBody"></tbody>
+                </table>
+            </div>
+
+            <div class="card" id="deliveryCard" style="display: none;">
+                <h3>🚚 Performance de Entrega</h3>
+                <div class="chart-container">
+                    <canvas id="deliveryChart"></canvas>
+                </div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Entregas</th>
+                            <th>Tempo Médio (min)</th>
+                            <th>P90 (min)</th>
+                            <th>% Rápidas (≤30min)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="deliveryTableBody"></tbody>
+                </table>
+            </div>
+
+            <div class="card" id="retentionCard" style="display: none;">
+                <h3>👥 Retenção de Clientes</h3>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Cliente</th>
+                            <th>E-mail</th>
+                            <th>Compras</th>
+                            <th>Ticket Médio</th>
+                            <th>Última Compra</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="retentionTableBody"></tbody>
+                </table>
+            </div>
+
+            <div class="card" id="anomaliesCard" style="display: none;">
+                <h3>⚠️ Anomalias (Últimos 30 dias)</h3>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Vendas</th>
+                            <th>Receita</th>
+                            <th>Anomalia</th>
+                            <th>Variação Vendas (%)</th>
+                            <th>Variação Receita (%)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="anomaliesTableBody"></tbody>
+                </table>
+            </div>
         </div>
 
         <div class="footer">
@@ -485,6 +553,7 @@
         let productsChart = null;
         let channelsChart = null;
         let storesChart = null;
+        let deliveryChart = null;
 
         // Inicialização
         document.addEventListener('DOMContentLoaded', function() {
@@ -591,7 +660,7 @@
                     end_date: endDate
                 });
                 
-                // Carregar dados em paralelo
+                // Carregar núcleo primeiro (render rápido)
                 const [summaryRes, productsRes, channelsRes, storesRes] = await Promise.all([
                     fetch(`${API_BASE}/sales/summary?${params}`),
                     fetch(`${API_BASE}/analytics/top-products?${params}&limit=10`),
@@ -627,6 +696,46 @@
                 document.getElementById('productsCard').style.display = 'block';
                 document.getElementById('channelsCard').style.display = 'block';
                 document.getElementById('storesCard').style.display = 'block';
+                
+                // Carregar seções pesadas em background
+                const loadDeferred = async () => {
+                    try {
+                        const [marginsRes, deliveryRes, retentionRes, anomaliesRes] = await Promise.all([
+                            fetch(`${API_BASE}/analytics/product-margins?${params}&limit=10`),
+                            fetch(`${API_BASE}/analytics/delivery-performance?${params}&group_by=day`),
+                            fetch(`${API_BASE}/analytics/customer-retention?${params}`),
+                            fetch(`${API_BASE}/analytics/anomalies?${params}`)
+                        ]);
+                        if (marginsRes.ok) {
+                            const margins = await marginsRes.json();
+                            updateMarginsTable(margins);
+                            document.getElementById('marginsCard').style.display = 'block';
+                        }
+                        if (deliveryRes.ok) {
+                            const delivery = await deliveryRes.json();
+                            updateDeliveryTable(delivery);
+                            createDeliveryChart(delivery);
+                            document.getElementById('deliveryCard').style.display = 'block';
+                        }
+                        if (retentionRes.ok) {
+                            const retention = await retentionRes.json();
+                            updateRetentionTable(retention);
+                            document.getElementById('retentionCard').style.display = 'block';
+                        }
+                        if (anomaliesRes.ok) {
+                            const anomalies = await anomaliesRes.json();
+                            updateAnomaliesTable(anomalies);
+                            document.getElementById('anomaliesCard').style.display = 'block';
+                        }
+                    } catch (e) {
+                        console.warn('Carga secundária falhou:', e.message);
+                    }
+                };
+                if ('requestIdleCallback' in window) {
+                    requestIdleCallback(loadDeferred, { timeout: 2000 });
+                } else {
+                    setTimeout(loadDeferred, 0);
+                }
                 
                 showSuccess('Dados carregados com sucesso!');
                 
@@ -825,6 +934,99 @@
                         }
                     }
                 }
+            });
+        }
+
+        function updateMarginsTable(margins) {
+            const tbody = document.getElementById('marginsTableBody');
+            tbody.innerHTML = '';
+            if (!Array.isArray(margins)) return;
+            margins.forEach((m) => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td class="store-name">${m.produto}</td>
+                    <td class="store-metric">${formatCurrency(m.preco_medio)}</td>
+                    <td class="store-metric">${(m.margem_percentual ?? 0).toLocaleString('pt-BR')}%</td>
+                    <td class="store-metric">${formatCurrency(m.lucro_total)}</td>
+                `;
+            });
+        }
+
+        function createDeliveryChart(delivery) {
+            const ctx = document.getElementById('deliveryChart').getContext('2d');
+            if (deliveryChart) deliveryChart.destroy();
+            const labels = (delivery || []).map(d => d.data ? new Date(d.data).toLocaleDateString('pt-BR') : d.hora || d.semana);
+            const data = (delivery || []).map(d => parseFloat(d.tempo_medio_minutos) || 0);
+            deliveryChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Tempo médio (min)',
+                        data,
+                        borderColor: '#764ba2',
+                        backgroundColor: 'rgba(118, 75, 162, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+
+        function updateDeliveryTable(delivery) {
+            const tbody = document.getElementById('deliveryTableBody');
+            tbody.innerHTML = '';
+            if (!Array.isArray(delivery)) return;
+            delivery.forEach(d => {
+                const row = tbody.insertRow();
+                const label = d.data ? new Date(d.data).toLocaleDateString('pt-BR') : (d.hora ?? d.semana);
+                row.innerHTML = `
+                    <td>${label}</td>
+                    <td class="store-metric">${formatNumber(d.total_entregas)}</td>
+                    <td class="store-metric">${(parseFloat(d.tempo_medio_minutos) || 0).toLocaleString('pt-BR')}</td>
+                    <td class="store-metric">${(parseFloat(d.p90_minutos) || 0).toLocaleString('pt-BR')}</td>
+                    <td class="store-metric">${(parseFloat(d.percentual_rapidas) || 0).toLocaleString('pt-BR')}%</td>
+                `;
+            });
+        }
+
+        function updateRetentionTable(rows) {
+            const tbody = document.getElementById('retentionTableBody');
+            tbody.innerHTML = '';
+            if (!Array.isArray(rows)) return;
+            rows.forEach(r => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td class="store-name">${r.customer_name || '-'}</td>
+                    <td>${r.email || '-'}</td>
+                    <td class="store-metric">${formatNumber(r.total_compras || 0)}</td>
+                    <td class="store-metric">${formatCurrency(r.ticket_medio || 0)}</td>
+                    <td>${r.ultima_compra ? new Date(r.ultima_compra).toLocaleString('pt-BR') : '-'}</td>
+                    <td>${r.status_retencao || '-'}</td>
+                `;
+            });
+        }
+
+        function updateAnomaliesTable(rows) {
+            const tbody = document.getElementById('anomaliesTableBody');
+            tbody.innerHTML = '';
+            if (!Array.isArray(rows)) return;
+            rows.forEach(r => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${r.data ? new Date(r.data).toLocaleDateString('pt-BR') : '-'}</td>
+                    <td class="store-metric">${formatNumber(r.vendas || 0)}</td>
+                    <td class="store-metric">${formatCurrency(r.receita || 0)}</td>
+                    <td>${r.anomalia || 'Normal'}</td>
+                    <td class="store-metric">${(parseFloat(r.variacao_vendas_pct) || 0).toLocaleString('pt-BR')}%</td>
+                    <td class="store-metric">${(parseFloat(r.variacao_receita_pct) || 0).toLocaleString('pt-BR')}%</td>
+                `;
             });
         }
 
