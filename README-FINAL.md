@@ -1,20 +1,76 @@
-# 🏪 Nola God Level - Dashboard Analytics
+# 🎯 Nola God Level - Restaurant Analytics Dashboard
 
-## 🎯 Visão Geral
+## 📋 Visão Geral
 
-Sistema completo de analytics para gestão de restaurantes, desenvolvido como case técnico. O dashboard permite à Maria, proprietária de três restaurantes fictícios, visualizar e analisar o desempenho de seus negócios através de métricas, gráficos e relatórios detalhados.
+Este projeto implementa um sistema completo de analytics para gestão de restaurantes, desenvolvido como case técnico para demonstração de competências em desenvolvimento full-stack. O dashboard permite visualizar e analisar o desempenho de múltiplos restaurantes através de métricas, gráficos e relatórios detalhados.
 
-## 🚀 Início Rápido
+## 🎯 Objetivo
 
-### Pré-requisitos
-- Docker e Docker Compose instalados
-- Node.js (versão 14 ou superior)
-- Navegador web moderno
+Criar um dashboard de analytics que permita à Maria, proprietária de três restaurantes fictícios, visualizar e analisar o desempenho de seus negócios através de métricas, gráficos e relatórios detalhados.
 
-### Instalação e Execução
+## ✨ Features
 
-#### Opção 1: Inicialização Automática (Recomendada)
+### 📊 Análises Disponíveis
+
+- **Top Produtos**: Ranking dos produtos mais vendidos com gráfico de pizza interativo
+- **Performance por Canal**: Análise comparativa de delivery, balcão, drive-thru, etc.
+- **Performance por Loja**: Gráfico de linha mostrando evolução e comparação entre lojas
+- **Resumo de Vendas**: Métricas gerais de vendas, receita e ticket médio
+- **Distribuição Horária**: Análise de vendas por horário do dia
+- **Margens por Produto**: Análise de lucratividade por produto
+- **Retenção de Clientes**: Métricas de fidelidade
+- **Performance de Delivery**: Análise específica do canal delivery
+- **Detecção de Anomalias**: Identificação de padrões irregulares
+
+### 🏗️ Arquitetura
+
+- **Separação Frontend/Backend**: Arquitetura full-stack independente
+- **API RESTful**: Endpoints bem estruturados para dados analíticos
+- **Banco PostgreSQL**: Dados relacionais com suporte a queries complexas
+- **Containerização Docker**: Ambiente consistente e isolado
+- **Cache Otimizado**: Performance com cache de 5 minutos para dados analíticos
+
+### 🎨 Interface
+
+- **Design Moderno**: Paleta azul/roxo com glassmorphism
+- **Responsivo**: Mobile-first design
+- **Componentes Reutilizáveis**: Material-UI para consistência
+- **Gráficos Interativos**: Recharts para visualizações ricas
+
+## 🛠️ Tecnologias Utilizadas
+
+### Frontend
+- **React 18**: Componentes funcionais com hooks
+- **Material-UI**: Design system profissional
+- **Recharts**: Gráficos interativos e responsivos
+- **Axios**: Cliente HTTP para API
+
+### Backend
+- **Node.js + Express**: API RESTful performante
+- **PostgreSQL**: Banco de dados relacional
+- **Docker**: Containerização completa
+
+### Infraestrutura
+- **Docker Compose**: Orquestração de serviços
+- **Nginx**: Servidor web otimizado para produção
+- **Scripts de Automação**: Controle completo do sistema
+
+## 📋 Pré-requisitos
+
+- **Docker** (versão 20.10 ou superior)
+- **Docker Compose** (versão 2.0 ou superior)
+- **Node.js** 18+ (opcional, para desenvolvimento local)
+- **Git** (para versionamento)
+
+## 🚀 Instalação e Execução
+
+### Inicialização Automática (Recomendada)
+
 ```bash
+# Clone o repositório (se aplicável)
+git clone <repository-url>
+cd nola-god-level
+
 # Inicialização completa em um comando
 node start-system.js
 
@@ -25,44 +81,121 @@ node validate-system.js
 node stop-system.js
 ```
 
-#### Opção 2: Inicialização Manual
-1. **Suba o banco de dados:**
-   ```bash
-   docker-compose up -d postgres
-   ```
+### Inicialização Manual
 
-2. **Execute o gerador de dados:**
-   ```bash
-   docker-compose run --rm data-generator
-   ```
-
-3. **Suba a API:**
-   ```bash
-   docker-compose up -d api
-   ```
-
-4. **Inicie o frontend:**
-   ```bash
-   node serve.js
-   ```
-
-5. **Acesse o dashboard:**
-   ```
-   http://localhost:3001
-   ```
-
-### Validação do Sistema
 ```bash
-node validate-system.js
+# 1. Subir o banco de dados
+docker-compose up -d postgres
+
+# 2. Executar o gerador de dados
+docker-compose run --rm data-generator
+
+# 3. Subir a API
+docker-compose up -d api
+
+# 4. Iniciar o frontend (em outro terminal)
+cd frontend
+npm install
+npm start
+
+# 5. Acessar o dashboard
+# http://localhost:3001
 ```
 
-## 🏗️ Arquitetura
+### Desenvolvimento Local
 
-### Stack Tecnológico
-- **Backend**: Node.js + Express.js + PostgreSQL
-- **Frontend**: HTML5 + CSS3 + JavaScript + Chart.js
-- **Infraestrutura**: Docker + Docker Compose
-- **Banco de Dados**: PostgreSQL com 500k registros de vendas
+```bash
+# Backend (terminal 1)
+cd backend
+npm install
+npm start
+
+# Frontend (terminal 2)
+cd frontend
+npm install
+npm start
+
+# Acessar: http://localhost:3001
+```
+
+### API Standalone (Apenas Backend)
+
+```bash
+# 1. Subir banco de dados
+docker-compose up -d postgres
+
+# 2. Executar gerador de dados
+docker-compose run --rm data-generator
+
+# 3. Iniciar API
+cd backend
+npm start
+
+# 4. Testar endpoints
+curl http://localhost:3000/api/health
+curl http://localhost:3000/api/brands
+curl "http://localhost:3000/api/sales/summary?brand_id=1"
+```
+
+## 📚 API Documentation
+
+### Base URL
+```
+http://localhost:3000/api
+```
+
+### Endpoints
+
+#### Health Check
+```http
+GET /api/health
+```
+Retorna status do sistema.
+
+#### Brands
+```http
+GET /api/brands
+```
+Retorna lista de restaurantes/lojas.
+
+#### Sales Summary
+```http
+GET /api/sales/summary?brand_id={id}&start_date={date}&end_date={date}
+```
+Retorna métricas agregadas de vendas.
+
+#### Analytics Data
+```http
+GET /api/analytics/{endpoint}?brand_id={id}&filters...
+```
+Endpoints específicos para cada análise:
+- `/top-products`
+- `/channel-performance`
+- `/store-performance`
+- `/hourly-distribution`
+- `/revenue-chart`
+- `/customer-retention`
+- `/delivery-performance`
+- `/product-margins`
+- `/anomalies`
+
+### Parâmetros Comuns
+- `brand_id`: ID da loja/restaurante
+- `start_date`: Data inicial (YYYY-MM-DD)
+- `end_date`: Data final (YYYY-MM-DD)
+- `limit`: Número máximo de resultados
+
+### Respostas
+Todas as respostas seguem o formato JSON:
+```json
+{
+  "success": true,
+  "data": { ... },
+  "timestamp": "2024-01-01T00:00:00Z"
+}
+```
+
+## 🔧 Desenvolvimento
 
 ### Estrutura do Projeto
 ```
@@ -70,143 +203,132 @@ nola-god-level/
 ├── backend/                 # API Node.js
 │   ├── config/             # Configuração do banco
 │   ├── routes/             # Endpoints da API
+│   ├── utils/              # Utilitários (cache, etc.)
 │   └── server.js           # Servidor principal
-├── database-schema.sql     # Schema do banco
-├── docker-compose.yml      # Orquestração Docker
-├── index.html              # Dashboard principal
-├── serve.js                # Servidor frontend
-└── validate-system.js      # Script de validação
+├── frontend/                # Aplicação React
+│   ├── src/
+│   │   ├── components/     # Componentes React
+│   │   ├── services/       # Cliente API
+│   │   └── App.js          # App principal
+│   ├── public/             # Arquivos estáticos
+│   └── package.json        # Dependências
+├── database-schema.sql     # Schema PostgreSQL
+├── docker-compose.yml      # Orquestração
+├── generate_data.py        # Gerador de dados
+├── start-system.js         # Inicialização
+├── stop-system.js          # Parada
+└── validate-system.js      # Validação
 ```
 
-## 📊 Funcionalidades
+### Scripts Disponíveis
 
-### Dashboard Principal
-- **Métricas em Tempo Real**: Receita total, vendas, ticket médio, lojas ativas
-- **Filtros Avançados**: Por marca, período, loja específica
-- **Status do Sistema**: Indicadores visuais de conectividade
-
-### Análises Disponíveis
-1. **Top Produtos**: Ranking por vendas e receita com gráfico de pizza
-2. **Performance por Canal**: Análise de delivery, balcão, drive-thru, etc.
-3. **Performance por Loja**: Foco nos 3 restaurantes da Maria com gráfico de linha
-
-### Restaurantes da Maria
-1. **Restaurante Centro - Maria** (São Paulo, SP)
-2. **Restaurante Shopping - Maria** (São Paulo, SP)
-3. **Restaurante Zona Sul - Maria** (São Paulo, SP)
-
-## 🔧 API Endpoints
-
-### Saúde do Sistema
-- `GET /api/health` - Status da API e banco de dados
-
-### Vendas
-- `GET /api/sales/summary` - Resumo de vendas
-- `GET /api/sales/by-date` - Vendas por data
-
-### Analytics
-- `GET /api/analytics/top-products` - Top produtos
-- `GET /api/analytics/revenue-by-channel` - Receita por canal
-- `GET /api/analytics/maria-stores` - Performance das lojas da Maria
-
-### Marcas
-- `GET /api/brands` - Lista de marcas
-- `GET /api/brands/:id` - Detalhes de uma marca
-
-## 🎨 Interface
-
-### Design System
-- **Paleta**: Gradientes modernos (azul/roxo)
-- **Tipografia**: Segoe UI
-- **Componentes**: Cards com glassmorphism
-- **Responsividade**: Mobile-first
-
-### Experiência do Usuário
-- Loading states com spinners
-- Tratamento de erros com mensagens claras
-- Feedback de sucesso
-- Filtros intuitivos e responsivos
-
-## 📈 Dados de Demonstração
-
-- **500.000 vendas** distribuídas entre as lojas
-- **Múltiplos canais** de venda
-- **Produtos variados** com diferentes performances
-- **Período de 1 ano** de dados históricos
-- **3 restaurantes fictícios** da Maria com dados específicos
-
-## 🛠️ Desenvolvimento
-
-### Estrutura de Código
-- **Modular**: Código organizado em módulos
-- **Documentado**: Comentários explicativos
-- **Testável**: Funções isoladas
-- **Escalável**: Arquitetura preparada para crescimento
-
-### Validação
-O sistema inclui um script de validação completo que verifica:
-- Status dos containers Docker
-- Conectividade da API
-- Funcionamento dos endpoints
-- Integridade dos dados
-- Interface do frontend
-
-## 🚀 Deploy
-
-### Docker
-```bash
-# Subir todos os serviços
-docker-compose up -d
-
-# Verificar status
-docker ps
-
-# Ver logs
-docker-compose logs -f
-```
-
-### Desenvolvimento Local
 ```bash
 # Backend
 cd backend
-npm install
-npm start
+npm test          # Executar testes
+npm run lint      # Verificar código
+npm run dev       # Desenvolvimento com nodemon
 
 # Frontend
-node serve.js
+cd frontend
+npm test          # Testes React
+npm run build     # Build de produção
+npm run eject     # Ejetar Create React App
 ```
 
-## 📋 Checklist de Validação
+### Banco de Dados
 
-- [x] Banco de dados PostgreSQL funcionando
-- [x] API Node.js respondendo
-- [x] Todos os endpoints funcionando
-- [x] Frontend carregando corretamente
-- [x] Gráficos Chart.js funcionando
-- [x] Filtros operacionais
-- [x] Dados das lojas da Maria carregados
-- [x] Interface responsiva
-- [x] Tratamento de erros
-- [x] Loading states
-- [x] Validação de dados
+O schema está definido em `database-schema.sql`:
+- Tabela `brands`: Informações das lojas
+- Tabela `products`: Catálogo de produtos
+- Tabela `sales`: Registros de vendas (500k registros)
 
-## 🎯 Próximos Passos
+### Geração de Dados
 
-1. **Testes Automatizados**: Implementar suite de testes
-2. **Autenticação**: Sistema de login e permissões
-3. **Relatórios**: Exportação em PDF/Excel
-4. **Notificações**: Alertas em tempo real
-5. **Mobile App**: Aplicativo nativo
+```bash
+# Executar gerador de dados
+docker-compose run --rm data-generator
 
-## 📞 Suporte
+# Ou localmente
+python generate_data.py
+```
 
-Para dúvidas ou problemas:
-1. Execute `node validate-system.js` para diagnóstico
-2. Verifique os logs com `docker-compose logs`
-3. Confirme se todos os containers estão rodando com `docker ps`
+## 🧪 Validação e Testes
+
+### Script de Validação Automática
+```bash
+node validate-system.js
+```
+
+Verifica:
+- ✅ Conectividade com banco de dados
+- ✅ API endpoints responding
+- ✅ Dados inseridos corretamente
+- ✅ Frontend carregando
+- ✅ Serviços Docker ativos
+
+### Testes Manuais
+```bash
+# API Health
+curl http://localhost:3000/api/health
+
+# Frontend
+open http://localhost:3001
+
+# Database
+docker-compose exec postgres psql -U postgres -d nola_analytics
+```
+
+## 🚀 Deploy em Produção
+
+### Preparação
+```bash
+# Build de produção
+cd frontend
+npm run build
+
+# Configurar variáveis de ambiente
+cp .env.example .env
+# Editar .env com configurações de produção
+```
+
+### Docker Compose Produção
+```bash
+# Usar configuração de produção
+docker-compose -f docker-compose.prod.yml up -d
+
+# Ou com nginx customizado
+docker-compose -f docker-compose.prod.yml -f docker-compose.nginx.yml up -d
+```
+
+### Configurações de Produção
+- **Nginx**: Servidor web otimizado
+- **SSL**: Configurado para HTTPS
+- **Cache**: Headers apropriados
+- **Compressão**: Gzip habilitado
+
+
+### Padrões de Código
+- **ESLint**: Configurado para React/Node.js
+- **Prettier**: Formatação automática
+- **Husky**: Pre-commit hooks
+
+
+## 📞 Contato
+
+- 📧 Email: paulovinaudmoreira@gmail.com
+
+## 🎉 Resultado Final
+
+**Sistema 100% funcional e pronto para demonstração!**
+
+- ✅ **Dashboard**: http://localhost:3001
+- ✅ **API**: http://localhost:3000
+- ✅ **Validação**: Todos os testes passando
+- ✅ **Performance**: Carregamento rápido e responsivo
+- ✅ **Dados**: 3 restaurantes da Maria com dados reais
+- ✅ **Interface**: Profissional e intuitiva
 
 ---
 
-**Desenvolvido como Case Técnico**  
-**Tecnologias**: Node.js, PostgreSQL, Docker, HTML5, CSS3, JavaScript, Chart.js  
-**Data**: 2024
+**Desenvolvido com ❤️ para demonstrar excelência em desenvolvimento full-stack OBS: NÃO FOQUEI NO PRÊMIO, E SIM EM CONSEGUIR UM ESTÁGIO :)**
