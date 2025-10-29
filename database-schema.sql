@@ -1,3 +1,7 @@
+DROP MATERIALIZED VIEW IF EXISTS MY_SALES_FACT;
+DROP MATERIALIZED VIEW IF EXISTS MY_ITEM_FACT;
+DROP MATERIALIZED VIEW IF EXISTS MY_DELIVERY_FACT;
+
 CREATE TABLE brands (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -234,3 +238,59 @@ CREATE TABLE coupon_sales (
     target VARCHAR(100),
     sponsorship VARCHAR(100)
 );
+
+CREATE MATERIALIZED VIEW mv_store AS
+SELECT
+    st.name AS dimension,
+    SUM(s.total_amount) AS total_revenue,
+    COUNT(*) AS total_sales,
+    AVG(s.total_amount) AS average_ticket
+FROM
+    sales s
+JOIN
+    stores st ON st.id = s.store_id
+WHERE
+    s.sale_status_desc = 'COMPLETED'
+GROUP BY
+    st.name
+WITH DATA;
+
+CREATE MATERIALIZED VIEW mv_channel AS
+SELECT
+    ch.name AS dimension,
+    SUM(s.total_amount) AS total_revenue,
+    COUNT(*) AS total_sales,
+    AVG(s.total_amount) AS average_ticket
+FROM
+    sales s
+JOIN
+    channels ch ON ch.id = s.channel_id
+WHERE
+    s.sale_status_desc = 'COMPLETED'
+GROUP BY
+    ch.name
+WITH DATA;
+
+CREATE MATERIALIZED VIEW mv_day_of_week AS
+SELECT
+    CASE
+        WHEN EXTRACT(DOW FROM s.created_at) = 0 THEN 'Domingo'
+        WHEN EXTRACT(DOW FROM s.created_at) = 1 THEN 'Segunda'
+        WHEN EXTRACT(DOW FROM s.created_at) = 2 THEN 'Terça'
+        WHEN EXTRACT(DOW FROM s.created_at) = 3 THEN 'Quarta'
+        WHEN EXTRACT(DOW FROM s.created_at) = 4 THEN 'Quinta'
+        WHEN EXTRACT(DOW FROM s.created_at) = 5 THEN 'Sexta'
+        WHEN EXTRACT(DOW FROM s.created_at) = 6 THEN 'Sábado'
+    END AS dimension,
+    SUM(s.total_amount) AS total_revenue,
+    COUNT(*) AS total_sales,
+    AVG(s.total_amount) AS average_ticket
+FROM
+    sales s
+WHERE
+    s.sale_status_desc = 'COMPLETED'
+GROUP BY
+    EXTRACT(DOW FROM s.created_at)
+ORDER BY
+    EXTRACT(DOW FROM s.created_at)
+WITH DATA;

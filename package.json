@@ -1,0 +1,26 @@
+{
+  "dependencies": {
+    "chart.js": "^4.5.1",
+    "express": "^5.1.0",
+    "react-chartjs-2": "^5.3.1",
+    "recharts": "^3.3.0"
+  },
+  "name": "nola-god-level",
+  "version": "1.0.0",
+  "description": "Donos de restaurantes gerenciam operações complexas através de múltiplos canais (presencial, iFood, Rappi, app próprio). Eles têm dados de **vendas, produtos, clientes e operações**, mas não conseguem extrair insights personalizados para tomar decisões de negócio.",
+  "main": "serve-frontend.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lucasvieira94/nola-god-level.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lucasvieira94/nola-god-level/issues"
+  },
+  "homepage": "https://github.com/lucasvieira94/nola-god-level#readme"
+}

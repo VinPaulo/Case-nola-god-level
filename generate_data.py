@@ -15,7 +15,7 @@ from faker import Faker
 fake = Faker('pt_BR')
 
 # Configurations
-BRAND_ID = 1
+BRAND_ID = []
 SALES_STATUS = ['COMPLETED', 'CANCELLED']
 STATUS_WEIGHTS = [0.95, 0.05]  # 95% completed
 CATEGORIES_PRODUCTS = ['Burgers', 'Pizzas', 'Pratos', 'Combos', 'Sobremesas', 'Bebidas']
@@ -83,17 +83,23 @@ def get_hour_weight(hour):
 
 
 def setup_base_data(conn):
-    """Create brands, channels, payment types"""
+    """Create brand, sub-brands, channels, and payment types"""
     print("Setting up base data...")
     cursor = conn.cursor()
     
+    # Cria a brand principal
+    cursor.execute(
+        "INSERT INTO brands (name) VALUES ('Challenge Group') RETURNING id"
+    )
+    brand_id = cursor.fetchone()[0]
+
     # Sub-brands
     sub_brands = ['Challenge Burger', 'Challenge Pizza', 'Challenge Sushi']
     sub_brand_ids = []
     for sb in sub_brands:
         cursor.execute(
             "INSERT INTO sub_brands (brand_id, name) VALUES (%s, %s) RETURNING id",
-            (BRAND_ID, sb)
+            (brand_id, sb)
         )
         sub_brand_ids.append(cursor.fetchone()[0])
     
@@ -103,7 +109,7 @@ def setup_base_data(conn):
         cursor.execute("""
             INSERT INTO channels (brand_id, name, description, type)
             VALUES (%s, %s, %s, %s) RETURNING id
-        """, (BRAND_ID, name, f'Canal {name}', ch_type))
+        """, (brand_id, name, f'Canal {name}', ch_type))
         channel_ids.append({
             'id': cursor.fetchone()[0], 
             'name': name, 
@@ -115,7 +121,7 @@ def setup_base_data(conn):
     for pt in PAYMENT_TYPES_LIST:
         cursor.execute(
             "INSERT INTO payment_types (brand_id, description) VALUES (%s, %s)",
-            (BRAND_ID, pt)
+            (brand_id, pt)
         )
     
     conn.commit()
