@@ -13,28 +13,40 @@ Sistema completo de analytics para gestão de restaurantes, desenvolvido como ca
 
 ### Instalação e Execução
 
-1. **Clone o repositório** (se aplicável)
-2. **Suba o banco de dados:**
+#### Opção 1: Inicialização Automática (Recomendada)
+```bash
+# Inicialização completa em um comando
+node start-system.js
+
+# Validação do sistema
+node validate-system.js
+
+# Parar sistema
+node stop-system.js
+```
+
+#### Opção 2: Inicialização Manual
+1. **Suba o banco de dados:**
    ```bash
    docker-compose up -d postgres
    ```
 
-3. **Execute o gerador de dados:**
+2. **Execute o gerador de dados:**
    ```bash
    docker-compose run --rm data-generator
    ```
 
-4. **Suba a API:**
+3. **Suba a API:**
    ```bash
    docker-compose up -d api
    ```
 
-5. **Inicie o frontend:**
+4. **Inicie o frontend:**
    ```bash
    node serve.js
    ```
 
-6. **Acesse o dashboard:**
+5. **Acesse o dashboard:**
    ```
    http://localhost:3001
    ```

@@ -1,10 +1,3 @@
-#!/usr/bin/env node
-
-/**
- * Script de Validação do Sistema Nola God Level
- * Verifica se todos os componentes estão funcionando corretamente
- */
-
 const http = require('http');
 const { exec } = require('child_process');
 const util = require('util');

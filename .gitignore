@@ -35,17 +35,24 @@ build/
 # OS
 Thumbs.db
 
-# Case
-
+# Case - Documentação externa (não incluir no projeto)
 FAQ.md
 PROBLEMA.md
 QUICKSTART.md
 DADOS.md
 README.md
 
-# Modulos
+# Documentação técnica do case (manter no projeto)
+# CASE-TECNICO.md - Documentação técnica principal
+# README-FINAL.md - Instruções de uso
+# ENTREGA-FINAL.md - Resumo da entrega
 
+# Modulos
 node_modules
 frontend/node_modules
 backend/node_modules
+
+# Scripts de sistema (opcionais - podem ser removidos se não precisar)
+# start-system.js - Script universal de inicialização
+# stop-system.js - Script universal de parada
 
