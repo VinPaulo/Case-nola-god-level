@@ -2,18 +2,18 @@ const express = require('express');
 const db = require('../config/database');
 const router = express.Router();
 
-// Get all brands
+// Listar todas as marcas
 router.get('/', async (req, res) => {
   try {
     const result = await db.query('SELECT * FROM brands ORDER BY name');
     res.json(result.rows);
   } catch (error) {
-    console.error('Error fetching brands:', error);
-    res.status(500).json({ error: 'Failed to fetch brands' });
+    console.error('Erro ao buscar marcas:', error);
+    res.status(500).json({ error: 'Falha ao buscar marcas' });
   }
 });
 
-// Get stores by brand
+// Listar todas as lojas por marca
 router.get('/:brandId/stores', async (req, res) => {
   try {
     const { brandId } = req.params;
@@ -23,12 +23,12 @@ router.get('/:brandId/stores', async (req, res) => {
     );
     res.json(result.rows);
   } catch (error) {
-    console.error('Error fetching stores:', error);
-    res.status(500).json({ error: 'Failed to fetch stores' });
+    console.error('Erro ao buscar lojas:', error);
+    res.status(500).json({ error: 'Falha ao buscar lojas' });
   }
 });
 
-// Get channels by brand
+// Listar todos os canais por marca
 router.get('/:brandId/channels', async (req, res) => {
   try {
     const { brandId } = req.params;
@@ -38,8 +38,8 @@ router.get('/:brandId/channels', async (req, res) => {
     );
     res.json(result.rows);
   } catch (error) {
-    console.error('Error fetching channels:', error);
-    res.status(500).json({ error: 'Failed to fetch channels' });
+    console.error('Erro ao buscar canais:', error);
+    res.status(500).json({ error: 'Falha ao buscar canais' });
   }
 });
 
