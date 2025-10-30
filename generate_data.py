@@ -86,12 +86,16 @@ def setup_base_data(conn):
     """Create brand, sub-brands, channels, and payment types"""
     print("Setting up base data...")
     cursor = conn.cursor()
-    
+
     # Cria a brand principal
     cursor.execute(
         "INSERT INTO brands (name) VALUES ('Challenge Group') RETURNING id"
     )
     brand_id = cursor.fetchone()[0]
+
+    # Corrige a variável global
+    global BRAND_ID
+    BRAND_ID = brand_id
 
     # Sub-brands
     sub_brands = ['Challenge Burger', 'Challenge Pizza', 'Challenge Sushi']
@@ -127,6 +131,7 @@ def setup_base_data(conn):
     conn.commit()
     print(f"✓ Base data: {len(sub_brand_ids)} sub-brands, {len(channel_ids)} channels")
     return sub_brand_ids, channel_ids
+
 
 
 def generate_stores(conn, sub_brand_ids, num_stores=50):

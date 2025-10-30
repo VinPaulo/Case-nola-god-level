@@ -1,10 +1,3 @@
-#!/usr/bin/env node
-
-/**
- * Script Universal de Inicialização do Sistema Nola God Level
- * Funciona em Windows, Linux e macOS
- */
-
 const { exec, spawn } = require('child_process');
 const util = require('util');
 const http = require('http');

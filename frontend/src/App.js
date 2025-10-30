@@ -8,22 +8,19 @@ import {
   Grid,
   Card,
   CardContent,
-  Paper,
-  Tabs,
-  Tab,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
-  Chip,
   CircularProgress,
-  Alert
+  Alert,
+  Tabs,
+  Tab
 } from '@mui/material';
 import {
   TrendingUp,
   Store,
   ShoppingCart,
-  AttachMoney,
   Timeline,
   BarChart
 } from '@mui/icons-material';
@@ -34,6 +31,7 @@ import ChannelPerformance from './components/ChannelPerformance';
 import StorePerformance from './components/StorePerformance';
 import HourlyDistribution from './components/HourlyDistribution';
 import SalesSummary from './components/SalesSummary';
+import TopProductsByWeekday from './components/TopProductsByWeekday';
 import { api } from './services/api';
 
 function App() {
@@ -88,8 +86,8 @@ function App() {
   }
 
   return (
-    <Box sx={{ flexGrow: 1 }}>
-      <AppBar position="static">
+    <Box sx={{ flexGrow: 1, backgroundColor: '#f9fafc', minHeight: '100vh' }}>
+      <AppBar position="static" sx={{ mb: 3 }}>
         <Toolbar>
           <TrendingUp sx={{ mr: 2 }} />
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
@@ -113,7 +111,7 @@ function App() {
         </Toolbar>
       </AppBar>
 
-      <Container maxWidth="xl" sx={{ mt: 3, mb: 3 }}>
+      <Container maxWidth="xl" sx={{ mt: 2, mb: 4 }}>
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
           <Tabs value={tabValue} onChange={handleTabChange}>
             <Tab icon={<BarChart />} label="Visão Geral" />
@@ -123,13 +121,16 @@ function App() {
           </Tabs>
         </Box>
 
+        {/* --- VISÃO GERAL --- */}
         {tabValue === 0 && (
           <Grid container spacing={3}>
             <Grid item xs={12}>
               <SalesSummary brandId={selectedBrand} />
             </Grid>
+
+            {/* Receita por Dia */}
             <Grid item xs={12} md={8}>
-              <Card>
+              <Card sx={{ height: '100%', boxShadow: 3, borderRadius: 2 }}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
                     Receita por Dia
@@ -138,8 +139,10 @@ function App() {
                 </CardContent>
               </Card>
             </Grid>
+
+            {/* Performance por Canal */}
             <Grid item xs={12} md={4}>
-              <Card>
+              <Card sx={{ height: '100%', boxShadow: 3, borderRadius: 2 }}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
                     Performance por Canal
@@ -148,13 +151,26 @@ function App() {
                 </CardContent>
               </Card>
             </Grid>
+
+            {/* Top Produtos por Dia da Semana */}
+            <Grid item xs={12}>
+              <Card sx={{ height: '100%', boxShadow: 3, borderRadius: 2 }}>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Top Produtos por Dia da Semana
+                  </Typography>
+                  <TopProductsByWeekday brandId={selectedBrand} />
+                </CardContent>
+              </Card>
+            </Grid>
           </Grid>
         )}
 
+        {/* --- TENDÊNCIAS --- */}
         {tabValue === 1 && (
           <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
-              <Card>
+              <Card sx={{ boxShadow: 3, borderRadius: 2 }}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
                     Distribuição por Horário
@@ -164,7 +180,7 @@ function App() {
               </Card>
             </Grid>
             <Grid item xs={12} md={6}>
-              <Card>
+              <Card sx={{ boxShadow: 3, borderRadius: 2 }}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
                     Receita por Canal
@@ -176,10 +192,11 @@ function App() {
           </Grid>
         )}
 
+        {/* --- LOJAS --- */}
         {tabValue === 2 && (
           <Grid container spacing={3}>
             <Grid item xs={12}>
-              <Card>
+              <Card sx={{ boxShadow: 3, borderRadius: 2 }}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
                     Performance das Lojas
@@ -191,10 +208,11 @@ function App() {
           </Grid>
         )}
 
+        {/* --- PRODUTOS --- */}
         {tabValue === 3 && (
           <Grid container spacing={3}>
             <Grid item xs={12}>
-              <Card>
+              <Card sx={{ boxShadow: 3, borderRadius: 2 }}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
                     Produtos Mais Vendidos

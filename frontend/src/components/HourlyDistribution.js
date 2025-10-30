@@ -33,7 +33,6 @@ const HourlyDistribution = ({ brandId }) => {
       setLoading(true);
       const response = await api.get(`/analytics/hourly-distribution?brand_id=${brandId}`);
       
-      // Create array with all 24 hours, filling missing hours with 0
       const hourlyData = Array.from({ length: 24 }, (_, index) => {
         const existingData = response.data.find(item => parseInt(item.hour) === index);
         return {

@@ -2,7 +2,7 @@ const express = require('express');
 const db = require('../config/database');
 const router = express.Router();
 
-// Get all sales with pagination
+// Listar todas as vendas com paginação
 router.get('/', async (req, res) => {
   try {
     const { page = 1, limit = 50, brand_id, store_id, channel_id } = req.query;
@@ -47,7 +47,7 @@ router.get('/', async (req, res) => {
     
     const result = await db.query(query, params);
     
-    // Get total count
+    // Contar todas as vendas
     let countQuery = `
       SELECT COUNT(*) as total
       FROM sales s
@@ -89,12 +89,12 @@ router.get('/', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error fetching sales:', error);
-    res.status(500).json({ error: 'Failed to fetch sales' });
+    console.error('Erro ao buscar vendas:', error);
+    res.status(500).json({ error: 'Falha ao buscar vendas' });
   }
 });
 
-// Get sales summary
+// Resumo das vendas
 router.get('/summary', async (req, res) => {
   try {
     const { brand_id, start_date, end_date } = req.query;
@@ -112,7 +112,7 @@ router.get('/summary', async (req, res) => {
       WHERE s.sale_status_desc = 'COMPLETED'
     `;
     
-    const params = [brand_id || 1]; // Usar brand_id fornecido ou 1 como padrão
+    const params = [brand_id || 1]; // Brand_id padrão é 1
     let paramCount = 2; // Começar do 2 pois $1 já é usado na subconsulta
     
     if (brand_id) {
@@ -136,8 +136,8 @@ router.get('/summary', async (req, res) => {
     const result = await db.query(query, params);
     res.json(result.rows[0]);
   } catch (error) {
-    console.error('Error fetching sales summary:', error);
-    res.status(500).json({ error: 'Failed to fetch sales summary' });
+    console.error('Erro ao buscar resumo das vendas:', error);
+    res.status(500).json({ error: 'Falha ao buscar resumo das vendas' });
   }
 });
 

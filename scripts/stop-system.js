@@ -1,10 +1,3 @@
-#!/usr/bin/env node
-
-/**
- * Script Universal de Parada do Sistema Nola God Level
- * Funciona em Windows, Linux e macOS
- */
-
 const { exec } = require('child_process');
 const util = require('util');
 

@@ -11,13 +11,13 @@ const pool = new Pool({
   connectionTimeoutMillis: 2000,
 });
 
-// Test connection
+// Teste de conexão
 pool.on('connect', () => {
-  console.log('✅ Connected to PostgreSQL database');
+  console.log('✅ Conectado ao banco de dados PostgreSQL');
 });
 
 pool.on('error', (err) => {
-  console.error('❌ Database connection error:', err);
+  console.error('❌ Erro de conexão com o banco de dados:', err);
 });
 
 module.exports = pool;
