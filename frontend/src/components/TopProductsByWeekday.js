@@ -26,11 +26,14 @@ const TopProductsByWeekday = ({ brandId }) => {
   const loadTopProductsByWeekday = async () => {
     try {
       setLoading(true);
+      console.log('Loading top products by weekday for brand:', brandId);
       const response = await api.get(`/analytics/top-products-by-weekday?brand_id=${brandId}&limit=3`);
+      console.log('Response data:', response.data);
       setData(response.data);
+      setError(null);
     } catch (err) {
-      setError('Erro ao carregar produtos mais vendidos por dia da semana');
       console.error('Error loading top products by weekday:', err);
+      setError('Erro ao carregar produtos mais vendidos por dia da semana');
     } finally {
       setLoading(false);
     }

@@ -15,14 +15,19 @@ import {
   CircularProgress,
   Alert,
   Tabs,
-  Tab
+  Tab,
+  IconButton,
+  ThemeProvider,
+  createTheme
 } from '@mui/material';
 import {
   TrendingUp,
   Store,
   ShoppingCart,
   Timeline,
-  BarChart
+  BarChart,
+  Brightness4,
+  Brightness7
 } from '@mui/icons-material';
 
 import RevenueChart from './components/RevenueChart';
@@ -40,6 +45,31 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [tabValue, setTabValue] = useState(0);
+  const [darkMode, setDarkMode] = useState(false);
+
+  const theme = createTheme({
+    palette: {
+      mode: darkMode ? 'dark' : 'light',
+      primary: {
+        main: '#1976d2',
+      },
+      secondary: {
+        main: '#dc004e',
+      },
+      background: {
+        default: darkMode ? '#121212' : '#f5f5f5',
+      },
+    },
+    typography: {
+      fontFamily: 'Roboto, Arial, sans-serif',
+      h4: {
+        fontWeight: 600,
+      },
+      h6: {
+        fontWeight: 500,
+      },
+    },
+  });
 
   useEffect(() => {
     loadBrands();
@@ -69,6 +99,10 @@ function App() {
     setTabValue(newValue);
   };
 
+  const handleThemeToggle = () => {
+    setDarkMode(!darkMode);
+  };
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
@@ -86,30 +120,34 @@ function App() {
   }
 
   return (
-    <Box sx={{ flexGrow: 1, backgroundColor: '#f9fafc', minHeight: '100vh' }}>
-      <AppBar position="static" sx={{ mb: 3 }}>
-        <Toolbar>
-          <TrendingUp sx={{ mr: 2 }} />
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Nola God Level - Analytics Dashboard
-          </Typography>
-          <FormControl variant="outlined" size="small" sx={{ minWidth: 200 }}>
-            <InputLabel>Marca</InputLabel>
-            <Select
-              value={selectedBrand}
-              onChange={handleBrandChange}
-              label="Marca"
-              sx={{ color: 'white' }}
-            >
-              {brands.map((brand) => (
-                <MenuItem key={brand.id} value={brand.id.toString()}>
-                  {brand.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Toolbar>
-      </AppBar>
+    <ThemeProvider theme={theme}>
+      <Box sx={{ flexGrow: 1, backgroundColor: 'background.default', minHeight: '100vh' }}>
+        <AppBar position="static" sx={{ mb: 3 }}>
+          <Toolbar>
+            <TrendingUp sx={{ mr: 2 }} />
+            <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+              Nola God Level - Analytics Dashboard
+            </Typography>
+            <IconButton color="inherit" onClick={handleThemeToggle}>
+              {darkMode ? <Brightness7 /> : <Brightness4 />}
+            </IconButton>
+            <FormControl variant="outlined" size="small" sx={{ minWidth: 200, ml: 2 }}>
+              <InputLabel>Marca</InputLabel>
+              <Select
+                value={selectedBrand}
+                onChange={handleBrandChange}
+                label="Marca"
+                sx={{ color: 'white' }}
+              >
+                {brands.map((brand) => (
+                  <MenuItem key={brand.id} value={brand.id.toString()}>
+                    {brand.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Toolbar>
+        </AppBar>
 
       <Container maxWidth="xl" sx={{ mt: 2, mb: 4 }}>
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
@@ -131,11 +169,15 @@ function App() {
             {/* Receita por Dia */}
             <Grid item xs={12} md={8}>
               <Card sx={{ height: '100%', boxShadow: 3, borderRadius: 2 }}>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Receita por Dia
-                  </Typography>
-                  <RevenueChart brandId={selectedBrand} />
+                <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column', p: 0 }}>
+                  <Box sx={{ p: 3, pb: 0 }}>
+                    <Typography variant="h6" gutterBottom>
+                      Receita por Dia
+                    </Typography>
+                  </Box>
+                  <Box sx={{ flex: 1, p: 3, pt: 0 }}>
+                    <RevenueChart brandId={selectedBrand} />
+                  </Box>
                 </CardContent>
               </Card>
             </Grid>
@@ -170,22 +212,30 @@ function App() {
         {tabValue === 1 && (
           <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
-              <Card sx={{ boxShadow: 3, borderRadius: 2 }}>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Distribuição por Horário
-                  </Typography>
-                  <HourlyDistribution brandId={selectedBrand} />
+              <Card sx={{ height: '100%', boxShadow: 3, borderRadius: 2 }}>
+                <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column', p: 0 }}>
+                  <Box sx={{ p: 3, pb: 0 }}>
+                    <Typography variant="h6" gutterBottom>
+                      Distribuição por Horário
+                    </Typography>
+                  </Box>
+                  <Box sx={{ flex: 1, p: 3, pt: 0 }}>
+                    <HourlyDistribution brandId={selectedBrand} />
+                  </Box>
                 </CardContent>
               </Card>
             </Grid>
             <Grid item xs={12} md={6}>
-              <Card sx={{ boxShadow: 3, borderRadius: 2 }}>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Receita por Canal
-                  </Typography>
-                  <ChannelPerformance brandId={selectedBrand} />
+              <Card sx={{ height: '100%', boxShadow: 3, borderRadius: 2 }}>
+                <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column', p: 0 }}>
+                  <Box sx={{ p: 3, pb: 0 }}>
+                    <Typography variant="h6" gutterBottom>
+                      Receita por Canal
+                    </Typography>
+                  </Box>
+                  <Box sx={{ flex: 1, p: 3, pt: 0 }}>
+                    <ChannelPerformance brandId={selectedBrand} />
+                  </Box>
                 </CardContent>
               </Card>
             </Grid>
@@ -225,6 +275,7 @@ function App() {
         )}
       </Container>
     </Box>
+    </ThemeProvider>
   );
 }
 

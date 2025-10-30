@@ -53,19 +53,23 @@ const HourlyDistribution = ({ brandId }) => {
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" height={300}>
+      <Box display="flex" justifyContent="center" alignItems="center" sx={{ height: '100%', minHeight: 300 }}>
         <CircularProgress />
       </Box>
     );
   }
 
   if (error) {
-    return <Alert severity="error">{error}</Alert>;
+    return (
+      <Box sx={{ height: '100%', minHeight: 300 }}>
+        <Alert severity="error">{error}</Alert>
+      </Box>
+    );
   }
 
   if (data.length === 0) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" height={300}>
+      <Box display="flex" justifyContent="center" alignItems="center" sx={{ height: '100%', minHeight: 300 }}>
         <Typography color="textSecondary">Nenhum dado disponível</Typography>
       </Box>
     );
@@ -83,7 +87,7 @@ const HourlyDistribution = ({ brandId }) => {
   };
 
   return (
-    <Box height={400}>
+    <Box sx={{ height: '100%', minHeight: 400 }}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" />

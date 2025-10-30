@@ -77,7 +77,7 @@ const RevenueChart = ({ brandId }) => {
   };
 
   return (
-    <Box height={400}>
+    <Box sx={{ height: '100%', minHeight: 400 }}>
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" />
