@@ -54,38 +54,18 @@ const Anomalies = ({ brandId }) => {
   if (data.length === 0) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" height={200}>
-        <Typography color="textSecondary">Nenhuma anomalia encontrada</Typography>
+        <Typography color="textSecondary">Nenhuma anomalia detectada</Typography>
       </Box>
     );
   }
 
-  const formatCurrency = (value) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value || 0);
-  };
-
-  const formatNumber = (value) => {
-    return new Intl.NumberFormat('pt-BR').format(value || 0);
-  };
-
-  const formatPercentage = (value) => {
-    return `${(value || 0).toFixed(1)}%`;
-  };
-
-  const getAnomalyColor = (anomalia) => {
-    switch (anomalia?.toLowerCase()) {
-      case 'alta':
-      case 'high':
-        return 'warning';
-      case 'baixa':
-      case 'low':
-        return 'error';
-      case 'normal':
-        return 'success';
-      default:
-        return 'default';
+  const getSeverityColor = (severity) => {
+    if (!severity) return 'default';
+    switch (severity.toLowerCase()) {
+      case 'high': return 'error';
+      case 'medium': return 'warning';
+      case 'low': return 'info';
+      default: return 'default';
     }
   };
 
@@ -95,43 +75,26 @@ const Anomalies = ({ brandId }) => {
         <TableHead>
           <TableRow>
             <TableCell><strong>Data</strong></TableCell>
-            <TableCell align="right"><strong>Vendas</strong></TableCell>
-            <TableCell align="right"><strong>Receita</strong></TableCell>
-            <TableCell align="center"><strong>Anomalia</strong></TableCell>
-            <TableCell align="right"><strong>Variação Vendas %</strong></TableCell>
-            <TableCell align="right"><strong>Variação Receita %</strong></TableCell>
+            <TableCell><strong>Vendas</strong></TableCell>
+            <TableCell><strong>Receita</strong></TableCell>
+            <TableCell><strong>Ticket Médio</strong></TableCell>
+            <TableCell><strong>Anomalia</strong></TableCell>
+            <TableCell><strong>Variação Vendas (%)</strong></TableCell>
+            <TableCell><strong>Variação Receita (%)</strong></TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
-          {data.map((item, index) => (
-            <TableRow key={item.data || index} hover>
+          {data.map((anomaly, index) => (
+            <TableRow key={anomaly.data || index} hover>
+              <TableCell>{anomaly.data}</TableCell>
+              <TableCell>{anomaly.vendas}</TableCell>
+              <TableCell>R$ {(parseFloat(anomaly.receita) || 0).toFixed(2)}</TableCell>
+              <TableCell>R$ {(parseFloat(anomaly.ticket_medio) || 0).toFixed(2)}</TableCell>
               <TableCell>
-                {item.data ? new Date(item.data).toLocaleDateString('pt-BR') : '-'}
+                <Chip label={anomaly.anomalia} color={anomaly.anomalia.includes('Queda') ? 'error' : 'warning'} size="small" />
               </TableCell>
-              <TableCell align="right">
-                {formatNumber(item.vendas)}
-              </TableCell>
-              <TableCell align="right">
-                {formatCurrency(item.receita)}
-              </TableCell>
-              <TableCell align="center">
-                <Chip
-                  label={item.anomalia || 'Normal'}
-                  color={getAnomalyColor(item.anomalia)}
-                  size="small"
-                  variant="outlined"
-                />
-              </TableCell>
-              <TableCell align="right">
-                <Typography color={Math.abs(item.variacao_vendas_pct || 0) > 20 ? 'warning.main' : 'textSecondary'}>
-                  {formatPercentage(item.variacao_vendas_pct)}
-                </Typography>
-              </TableCell>
-              <TableCell align="right">
-                <Typography color={Math.abs(item.variacao_receita_pct || 0) > 20 ? 'warning.main' : 'textSecondary'}>
-                  {formatPercentage(item.variacao_receita_pct)}
-                </Typography>
-              </TableCell>
+              <TableCell>{(parseFloat(anomaly.variacao_vendas_pct) || 0).toFixed(1)}%</TableCell>
+              <TableCell>{(parseFloat(anomaly.variacao_receita_pct) || 0).toFixed(1)}%</TableCell>
             </TableRow>
           ))}
         </TableBody>
