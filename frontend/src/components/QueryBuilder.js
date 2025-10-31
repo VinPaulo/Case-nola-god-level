@@ -24,7 +24,10 @@ import {
   IconButton,
   Tooltip,
   Tabs,
-  Tab
+  Tab,
+  Checkbox,
+  FormControlLabel,
+  FormGroup
 } from '@mui/material';
 import {
   ExpandMore,
@@ -39,10 +42,16 @@ import {
   BarChart,
   PieChart,
   ShowChart,
-  TableChart
+  TableChart,
+  GetApp,
+  PictureAsPdf,
+  FileDownload
 } from '@mui/icons-material';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import { CSVLink } from 'react-csv';
 import { api } from '../services/api';
 import DynamicChart from './DynamicChart';
 
@@ -100,7 +109,7 @@ const QueryBuilder = ({ brandId }) => {
     { value: 'start_date', label: 'Data Inicial', type: 'date' },
     { value: 'end_date', label: 'Data Final', type: 'date' },
     { value: 'channel_id', label: 'Canal', type: 'select' },
-    { value: 'store_id', label: 'Loja', type: 'select' },
+    { value: 'store_id', label: 'Loja', type: 'multiselect' },
     { value: 'product_id', label: 'Produto', type: 'select' },
     { value: 'hour_range', label: 'Faixa Horária', type: 'range' }
   ];
@@ -108,6 +117,23 @@ const QueryBuilder = ({ brandId }) => {
   const [channels, setChannels] = useState([]);
   const [stores, setStores] = useState([]);
   const [products, setProducts] = useState([]);
+
+  const dimensionLabels = {
+    channel: 'Canal',
+    store: 'Loja',
+    product: 'Produto',
+    weekday: 'Dia da Semana',
+    hour: 'Hora',
+    date: 'Data'
+  };
+
+  const metricLabels = {
+    sales: 'Vendas',
+    revenue: 'Receita',
+    average_ticket: 'Ticket Médio',
+    products_sold: 'Produtos Vendidos',
+    delivery_time: 'Tempo de Entrega'
+  };
 
   useEffect(() => {
     if (brandId) {
@@ -220,6 +246,38 @@ const QueryBuilder = ({ brandId }) => {
             >
               {options.map(option => (
                 <MenuItem key={option.id} value={option.id}>
+                  {option.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        );
+      case 'multiselect':
+        let multiOptions = [];
+        if (filter.value === 'store_id') multiOptions = stores;
+
+        return (
+          <FormControl size="small" fullWidth>
+            <InputLabel>{filter.label}</InputLabel>
+            <Select
+              multiple
+              value={value || []}
+              onChange={(e) => handleFilterChange(filter.value, e.target.value)}
+              label={filter.label}
+              renderValue={(selected) => (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  {selected.map((value) => {
+                    const option = multiOptions.find(opt => opt.id === value);
+                    return (
+                      <Chip key={value} label={option?.name || value} size="small" />
+                    );
+                  })}
+                </Box>
+              )}
+            >
+              {multiOptions.map(option => (
+                <MenuItem key={option.id} value={option.id}>
+                  <Checkbox checked={(value || []).includes(option.id)} />
                   {option.name}
                 </MenuItem>
               ))}
@@ -395,12 +453,38 @@ const QueryBuilder = ({ brandId }) => {
               </Box>
 
               <TabPanel value={activeTab} index={0}>
-                <DynamicChart
-                  data={result.data}
-                  dimensions={result.dimensions}
-                  metrics={result.metrics}
-                  chartType={chartType}
-                />
+                {filters.store_id && filters.store_id.length > 1 ? (
+                  <Grid container spacing={2}>
+                    {filters.store_id.map((storeId, index) => {
+                      const storeData = result.data.filter(row => row.store === storeId);
+                      const storeName = stores.find(s => s.id === storeId)?.name || storeId;
+                      return (
+                        <Grid item xs={12} md={6} key={storeId}>
+                          <Card sx={{ height: '100%' }}>
+                            <CardContent>
+                              <Typography variant="h6" gutterBottom>
+                                {storeName}
+                              </Typography>
+                              <DynamicChart
+                                data={storeData}
+                                dimensions={result.dimensions}
+                                metrics={result.metrics}
+                                chartType={chartType}
+                              />
+                            </CardContent>
+                          </Card>
+                        </Grid>
+                      );
+                    })}
+                  </Grid>
+                ) : (
+                  <DynamicChart
+                    data={result.data}
+                    dimensions={result.dimensions}
+                    metrics={result.metrics}
+                    chartType={chartType}
+                  />
+                )}
               </TabPanel>
 
               <TabPanel value={activeTab} index={1}>
@@ -419,12 +503,12 @@ const QueryBuilder = ({ brandId }) => {
                       <tr>
                         {result.dimensions.map(dim => (
                           <th key={dim} style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>
-                            {dim}
+                            {dimensionLabels[dim] || dim}
                           </th>
                         ))}
                         {result.metrics.map(metric => (
                           <th key={metric} style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>
-                            {metric}
+                            {metricLabels[metric] || metric}
                           </th>
                         ))}
                       </tr>
@@ -457,7 +541,94 @@ const QueryBuilder = ({ brandId }) => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowPreview(false)}>Fechar</Button>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', px: 2 }}>
+            <Box>
+              <CSVLink
+                data={result?.data || []}
+                headers={result ? [
+                  ...result.dimensions.map(dim => ({ label: dimensionLabels[dim] || dim, key: dim })),
+                  ...result.metrics.map(metric => ({ label: metricLabels[metric] || metric, key: metric }))
+                ] : []}
+                filename={`relatorio-${new Date().toISOString().split('T')[0]}.csv`}
+                style={{ textDecoration: 'none' }}
+              >
+                <Button startIcon={<FileDownload />} variant="outlined" sx={{ mr: 1 }}>
+                  CSV
+                </Button>
+              </CSVLink>
+              <Button
+                startIcon={<PictureAsPdf />}
+                variant="outlined"
+                onClick={() => {
+                  if (!result) return;
+
+                  try {
+                    const doc = new jsPDF('p', 'mm', 'a4');
+                    doc.setFontSize(16);
+                    doc.text('Relatório de Análises', 14, 20);
+
+                    // Limitar dados para PDF (primeiros 20 registros para evitar overflow)
+                    const limitedData = result.data.slice(0, 20);
+                    const tableData = limitedData.map(row => [
+                      ...result.dimensions.map(dim => String(row[dim] || '')),
+                      ...result.metrics.map(metric => {
+                        if (typeof row[metric] === 'number') {
+                          return row[metric].toFixed(2);
+                        }
+                        return String(row[metric] || '');
+                      })
+                    ]);
+
+                    const head = [
+                      ...result.dimensions.map(dim => dimensionLabels[dim] || dim),
+                      ...result.metrics.map(metric => metricLabels[metric] || metric)
+                    ];
+
+                    doc.autoTable({
+                      head: [head],
+                      body: tableData,
+                      startY: 30,
+                      theme: 'grid',
+                      styles: {
+                        fontSize: 8,
+                        cellPadding: 3,
+                        overflow: 'linebreak',
+                        halign: 'center',
+                        valign: 'middle'
+                      },
+                      headStyles: {
+                        fillColor: [41, 128, 185],
+                        textColor: 255,
+                        fontStyle: 'bold'
+                      },
+                      margin: { top: 30, left: 14, right: 14 },
+                      didDrawPage: (data) => {
+                        // Adicionar número da página
+                        const pageCount = doc.internal.getNumberOfPages();
+                        doc.setFontSize(10);
+                        doc.text(`Página ${data.pageNumber} de ${pageCount}`, 14, doc.internal.pageSize.height - 10);
+                      }
+                    });
+
+                    // Se há mais dados, adicionar nota
+                    if (result.data.length > 20) {
+                      doc.setFontSize(8);
+                      doc.text(`* Mostrando apenas os primeiros 20 registros de ${result.data.length} total.`, 14, doc.lastAutoTable.finalY + 10);
+                    }
+
+                    const filename = `relatorio-${new Date().toISOString().split('T')[0]}.pdf`;
+                    doc.save(filename);
+                  } catch (error) {
+                    console.error('Erro ao gerar PDF:', error);
+                    alert('Erro ao gerar PDF. Verifique o console para detalhes.');
+                  }
+                }}
+              >
+                PDF
+              </Button>
+            </Box>
+            <Button onClick={() => setShowPreview(false)}>Fechar</Button>
+          </Box>
         </DialogActions>
       </Dialog>
     </Box>

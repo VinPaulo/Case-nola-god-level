@@ -834,8 +834,14 @@ router.post('/custom', async (req, res) => {
         params.push(filters.channel_id);
       }
       if (filters.store_id) {
-        whereParts.push('s.store_id = $' + (params.length + 1));
-        params.push(filters.store_id);
+        if (Array.isArray(filters.store_id)) {
+          const placeholders = filters.store_id.map((_, index) => '$' + (params.length + 1 + index)).join(',');
+          whereParts.push('s.store_id IN (' + placeholders + ')');
+          params.push(...filters.store_id);
+        } else {
+          whereParts.push('s.store_id = $' + (params.length + 1));
+          params.push(filters.store_id);
+        }
       }
       if (filters.product_id) {
         if (!joins.includes('JOIN product_sales ps ON ps.sale_id = s.id')) {
@@ -905,6 +911,133 @@ router.post('/custom', async (req, res) => {
   } catch (error) {
     console.error('Erro ao executar consulta personalizada:', error);
     res.status(500).json({ error: 'Falha ao executar consulta personalizada' });
+  }
+});
+
+// Alertas proativos
+router.get('/alerts', async (req, res) => {
+  try {
+    const { brand_id, role = 'socio' } = req.query;
+    const params = [];
+    let brandFilter = '';
+    if (brand_id) {
+      brandFilter = ' AND st.brand_id = $1';
+      params.push(brand_id);
+    }
+
+    // Calcular alertas baseados em dados recentes vs. período anterior
+    const query = `
+      WITH current_week AS (
+        SELECT
+          COUNT(*) as vendas_semana_atual,
+          SUM(s.total_amount) as receita_semana_atual,
+          AVG(s.total_amount) as ticket_medio_atual,
+          ${role === 'gerente' ? 'st.name as store_name,' : ''}
+          COUNT(*) FILTER (WHERE s.delivery_seconds / 60.0 > 30) as atrasos_entrega
+        FROM sales s
+        LEFT JOIN stores st ON s.store_id = st.id
+        WHERE s.sale_status_desc = 'COMPLETED'
+          AND s.created_at >= NOW() - INTERVAL '7 days'${brandFilter}
+        ${role === 'gerente' ? 'GROUP BY st.name' : ''}
+      ),
+      previous_week AS (
+        SELECT
+          COUNT(*) as vendas_semana_anterior,
+          SUM(s.total_amount) as receita_semana_anterior,
+          AVG(s.total_amount) as ticket_medio_anterior,
+          ${role === 'gerente' ? 'st.name as store_name,' : ''}
+          COUNT(*) FILTER (WHERE s.delivery_seconds / 60.0 > 30) as atrasos_entrega_anterior
+        FROM sales s
+        LEFT JOIN stores st ON s.store_id = st.id
+        WHERE s.sale_status_desc = 'COMPLETED'
+          AND s.created_at >= NOW() - INTERVAL '14 days'
+          AND s.created_at < NOW() - INTERVAL '7 days'${brandFilter}
+        ${role === 'gerente' ? 'GROUP BY st.name' : ''}
+      )
+      SELECT
+        ${role === 'gerente' ? 'cw.store_name,' : ''}
+        cw.vendas_semana_atual,
+        cw.receita_semana_atual,
+        cw.ticket_medio_atual,
+        pw.vendas_semana_anterior,
+        pw.receita_semana_anterior,
+        pw.ticket_medio_anterior,
+        cw.atrasos_entrega,
+        pw.atrasos_entrega_anterior
+      FROM current_week cw
+      ${role === 'gerente' ? 'FULL OUTER JOIN previous_week pw ON cw.store_name = pw.store_name' : 'CROSS JOIN previous_week pw'}
+    `;
+
+    const result = await db.query(query, params);
+    const alerts = [];
+
+    result.rows.forEach(row => {
+      const storePrefix = role === 'gerente' && row.store_name ? `Loja ${row.store_name}: ` : '';
+
+      // Alerta: Queda em vendas >15%
+      if (row.vendas_semana_anterior > 0) {
+        const dropSales = ((row.vendas_semana_atual - row.vendas_semana_anterior) / row.vendas_semana_anterior) * 100;
+        if (dropSales < -15) {
+          alerts.push({
+            type: 'warning',
+            message: `${storePrefix}Vendas caíram ${Math.abs(dropSales).toFixed(1)}% esta semana`,
+            severity: 'high'
+          });
+        }
+      }
+
+      // Alerta: Queda em receita >15%
+      if (row.receita_semana_anterior > 0) {
+        const dropRevenue = ((row.receita_semana_atual - row.receita_semana_anterior) / row.receita_semana_anterior) * 100;
+        if (dropRevenue < -15) {
+          alerts.push({
+            type: 'warning',
+            message: `${storePrefix}Receita caiu ${Math.abs(dropRevenue).toFixed(1)}% esta semana`,
+            severity: 'high'
+          });
+        }
+      }
+
+      // Alerta: Ticket médio baixo (< R$25)
+      if (row.ticket_medio_atual < 25) {
+        alerts.push({
+          type: 'info',
+          message: `${storePrefix}Ticket médio baixo (R$ ${row.ticket_medio_atual.toFixed(2)})`,
+          severity: 'medium'
+        });
+      }
+
+      // Alerta: Atrasos em entrega >20%
+      const totalDeliveries = row.vendas_semana_atual;
+      if (totalDeliveries > 0) {
+        const delayRate = (row.atrasos_entrega / totalDeliveries) * 100;
+        if (delayRate > 20) {
+          alerts.push({
+            type: 'error',
+            message: `${storePrefix}${delayRate.toFixed(1)}% das entregas com atraso`,
+            severity: 'high'
+          });
+        }
+      }
+
+      // Alerta positivo: Crescimento em vendas
+      if (row.vendas_semana_anterior > 0) {
+        const growthSales = ((row.vendas_semana_atual - row.vendas_semana_anterior) / row.vendas_semana_anterior) * 100;
+        if (growthSales > 10) {
+          alerts.push({
+            type: 'success',
+            message: `${storePrefix}Vendas cresceram ${growthSales.toFixed(1)}% esta semana!`,
+            severity: 'low'
+          });
+        }
+      }
+    });
+
+    // Limitar a 5 alertas mais recentes
+    res.json(alerts.slice(0, 5));
+  } catch (error) {
+    console.error('Erro ao buscar alertas:', error);
+    res.status(500).json({ error: 'Falha ao buscar alertas' });
   }
 });
 

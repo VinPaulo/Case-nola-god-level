@@ -69,34 +69,36 @@ const ProductMargins = ({ brandId }) => {
   };
 
   return (
-    <TableContainer component={Paper}>
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell><strong>Produto</strong></TableCell>
-            <TableCell align="right"><strong>Vendas Totais</strong></TableCell>
-            <TableCell align="right"><strong>Receita Total</strong></TableCell>
-            <TableCell align="right"><strong>Custo Estimado</strong></TableCell>
-            <TableCell align="right"><strong>Margem Unitária</strong></TableCell>
-            <TableCell align="right"><strong>Margem Percentual</strong></TableCell>
-            <TableCell align="right"><strong>Lucro Total</strong></TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {data.map((product, index) => (
-            <TableRow key={product.produto || index} hover>
-              <TableCell>{product.produto}</TableCell>
-              <TableCell align="right">{product.total_vendido}</TableCell>
-              <TableCell align="right">{formatCurrency(product.receita_total)}</TableCell>
-              <TableCell align="right">{formatCurrency(product.custo_estimado)}</TableCell>
-              <TableCell align="right">{formatCurrency(product.margem_unitaria)}</TableCell>
-              <TableCell align="right">{formatPercentage(product.margem_percentual)}</TableCell>
-              <TableCell align="right">{formatCurrency(product.lucro_total)}</TableCell>
+    <Box sx={{ height: '100%', overflow: 'auto' }}>
+      <TableContainer component={Paper} sx={{ height: '100%' }}>
+        <Table stickyHeader>
+          <TableHead>
+            <TableRow>
+              <TableCell><strong>Produto</strong></TableCell>
+              <TableCell align="right"><strong>Vendas Totais</strong></TableCell>
+              <TableCell align="right"><strong>Receita Total</strong></TableCell>
+              <TableCell align="right"><strong>Custo Estimado</strong></TableCell>
+              <TableCell align="right"><strong>Margem Unitária</strong></TableCell>
+              <TableCell align="right"><strong>Margem Percentual</strong></TableCell>
+              <TableCell align="right"><strong>Lucro Total</strong></TableCell>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+          </TableHead>
+          <TableBody>
+            {data.map((product, index) => (
+              <TableRow key={product.produto || index} hover>
+                <TableCell>{product.produto}</TableCell>
+                <TableCell align="right">{product.total_vendido}</TableCell>
+                <TableCell align="right">{formatCurrency(product.receita_total)}</TableCell>
+                <TableCell align="right">{formatCurrency(product.custo_estimado)}</TableCell>
+                <TableCell align="right">{formatCurrency(product.margem_unitaria)}</TableCell>
+                <TableCell align="right">{formatPercentage(product.margem_percentual)}</TableCell>
+                <TableCell align="right">{formatCurrency(product.lucro_total)}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
   );
 };
 
