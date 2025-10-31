@@ -126,22 +126,28 @@ const DynamicChart = ({ data, dimensions, metrics, chartType = 'bar' }) => {
     const nameKey = dimensions[0] || 'name';
     const total = data.reduce((acc, entry) => acc + (entry[valueKey] || 0), 0);
 
+    if (data.length === 0 || total === 0) {
+      return (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 400 }}>
+          Sem dados para exibir no gráfico de pizza
+        </div>
+      );
+    }
+
     return (
-      <ResponsiveContainer width="100%" height={400}>
-        <PieChart>
+      <ResponsiveContainer width="100%" height={500}>
+        <PieChart margin={{ top: 20, right: 80, bottom: 20, left: 20 }}>
           <Pie
             data={data}
             cx="50%"
             cy="50%"
             labelLine={false}
-            label={(entry) =>
-              `${entry[nameKey]}: ${total > 0 ? ((entry[valueKey] / total) * 100).toFixed(1) : 0}%`
-            }
-            outerRadius={150}
+            outerRadius={200}
             innerRadius={0}
             fill="#8884d8"
             dataKey={valueKey}
             nameKey={nameKey}
+            isAnimationActive={false}
           >
             {data.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

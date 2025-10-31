@@ -18,7 +18,8 @@ import {
   Tab,
   IconButton,
   ThemeProvider,
-  createTheme
+  createTheme,
+  Tooltip
 } from '@mui/material';
 import {
   TrendingUp,
@@ -27,7 +28,8 @@ import {
   Timeline,
   BarChart,
   Brightness4,
-  Brightness7
+  Brightness7,
+  People
 } from '@mui/icons-material';
 
 import RevenueChart from './components/RevenueChart';
@@ -42,6 +44,7 @@ import Anomalies from './components/Anomalies';
 import CustomerRetention from './components/CustomerRetention';
 import DeliveryPerformance from './components/DeliveryPerformance';
 import ProductMargins from './components/ProductMargins';
+import Alerts from './components/Alerts';
 import { api } from './services/api';
 
 function App() {
@@ -51,6 +54,9 @@ function App() {
   const [error, setError] = useState(null);
   const [tabValue, setTabValue] = useState(0);
   const [darkMode, setDarkMode] = useState(false);
+  const [currentRole, setCurrentRole] = useState('socio');
+  const [alerts, setAlerts] = useState([]);
+  const [alertsLoading, setAlertsLoading] = useState(false);
 
   const theme = createTheme({
     palette: {
@@ -78,6 +84,15 @@ function App() {
 
   useEffect(() => {
     loadBrands();
+    loadAlerts();
+  }, [selectedBrand, currentRole]);
+
+  useEffect(() => {
+    // Load role from localStorage on mount
+    const savedRole = localStorage.getItem('currentRole');
+    if (savedRole) {
+      setCurrentRole(savedRole);
+    }
   }, []);
 
   const loadBrands = async () => {
@@ -102,6 +117,25 @@ function App() {
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
+  };
+
+  const loadAlerts = async () => {
+    try {
+      setAlertsLoading(true);
+      const response = await api.get(`/analytics/alerts?brand_id=${selectedBrand}&role=${currentRole}`);
+      setAlerts(response.data);
+    } catch (err) {
+      console.error('Error loading alerts:', err);
+      setAlerts([]);
+    } finally {
+      setAlertsLoading(false);
+    }
+  };
+
+  const handleRoleChange = (event) => {
+    const newRole = event.target.value;
+    setCurrentRole(newRole);
+    localStorage.setItem('currentRole', newRole);
   };
 
   const handleThemeToggle = () => {
@@ -136,6 +170,19 @@ function App() {
             <IconButton color="inherit" onClick={handleThemeToggle}>
               {darkMode ? <Brightness7 /> : <Brightness4 />}
             </IconButton>
+            <FormControl variant="outlined" size="small" sx={{ minWidth: 150, ml: 2 }}>
+              <InputLabel sx={{ color: 'white' }}>Modo</InputLabel>
+              <Select
+                value={currentRole}
+                onChange={handleRoleChange}
+                label="Modo"
+                sx={{ color: 'white' }}
+              >
+                <MenuItem value="socio">Sócio</MenuItem>
+                <MenuItem value="gerente">Gerente</MenuItem>
+                <MenuItem value="marketing">Marketing</MenuItem>
+              </Select>
+            </FormControl>
             <FormControl variant="outlined" size="small" sx={{ minWidth: 200, ml: 2 }}>
               <InputLabel>Marca</InputLabel>
               <Select
@@ -169,6 +216,18 @@ function App() {
         {/* --- VISÃO GERAL --- */}
         {tabValue === 0 && (
           <Grid container spacing={3}>
+            {/* Alertas Proativos */}
+            <Grid item xs={12}>
+              <Card sx={{ boxShadow: 3, borderRadius: 2 }}>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Alertas e Insights
+                  </Typography>
+                  <Alerts alerts={alerts} loading={alertsLoading} />
+                </CardContent>
+              </Card>
+            </Grid>
+
             <Grid item xs={12}>
               <SalesSummary brandId={selectedBrand} />
             </Grid>
@@ -285,42 +344,58 @@ function App() {
         {tabValue === 4 && (
           <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
-              <Card sx={{ boxShadow: 3, borderRadius: 2 }}>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Detecção de Anomalias
-                  </Typography>
-                  <Anomalies brandId={selectedBrand} />
+              <Card sx={{ height: '100%', boxShadow: 3, borderRadius: 2 }}>
+                <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column', p: 0 }}>
+                  <Box sx={{ p: 3, pb: 0 }}>
+                    <Typography variant="h6" gutterBottom>
+                      Detecção de Anomalias
+                    </Typography>
+                  </Box>
+                  <Box sx={{ flex: 1, p: 3, pt: 0, overflow: 'auto' }}>
+                    <Anomalies brandId={selectedBrand} />
+                  </Box>
                 </CardContent>
               </Card>
             </Grid>
             <Grid item xs={12} md={6}>
-              <Card sx={{ boxShadow: 3, borderRadius: 2 }}>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Retenção de Clientes
-                  </Typography>
-                  <CustomerRetention brandId={selectedBrand} />
+              <Card sx={{ height: '100%', boxShadow: 3, borderRadius: 2 }}>
+                <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column', p: 0 }}>
+                  <Box sx={{ p: 3, pb: 0 }}>
+                    <Typography variant="h6" gutterBottom>
+                      Retenção de Clientes
+                    </Typography>
+                  </Box>
+                  <Box sx={{ flex: 1, p: 3, pt: 0, overflow: 'auto' }}>
+                    <CustomerRetention brandId={selectedBrand} />
+                  </Box>
                 </CardContent>
               </Card>
             </Grid>
             <Grid item xs={12} md={6}>
-              <Card sx={{ boxShadow: 3, borderRadius: 2 }}>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Performance de Entrega
-                  </Typography>
-                  <DeliveryPerformance brandId={selectedBrand} />
+              <Card sx={{ height: '100%', boxShadow: 3, borderRadius: 2 }}>
+                <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column', p: 0 }}>
+                  <Box sx={{ p: 3, pb: 0 }}>
+                    <Typography variant="h6" gutterBottom>
+                      Performance de Entrega
+                    </Typography>
+                  </Box>
+                  <Box sx={{ flex: 1, p: 3, pt: 0, overflow: 'auto' }}>
+                    <DeliveryPerformance brandId={selectedBrand} />
+                  </Box>
                 </CardContent>
               </Card>
             </Grid>
             <Grid item xs={12} md={6}>
-              <Card sx={{ boxShadow: 3, borderRadius: 2 }}>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Margens de Produtos
-                  </Typography>
-                  <ProductMargins brandId={selectedBrand} />
+              <Card sx={{ height: '100%', boxShadow: 3, borderRadius: 2 }}>
+                <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column', p: 0 }}>
+                  <Box sx={{ p: 3, pb: 0 }}>
+                    <Typography variant="h6" gutterBottom>
+                      Margens de Produtos
+                    </Typography>
+                  </Box>
+                  <Box sx={{ flex: 1, p: 3, pt: 0, overflow: 'auto' }}>
+                    <ProductMargins brandId={selectedBrand} />
+                  </Box>
                 </CardContent>
               </Card>
             </Grid>
@@ -331,7 +406,18 @@ function App() {
         {tabValue === 5 && (
           <Grid container spacing={3}>
             <Grid item xs={12}>
-              <QueryBuilder brandId={selectedBrand} />
+              <Card sx={{ height: '100%', boxShadow: 3, borderRadius: 2 }}>
+                <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column', p: 0 }}>
+                  <Box sx={{ p: 3, pb: 0 }}>
+                    <Typography variant="h6" gutterBottom>
+                      Consultas Personalizadas
+                    </Typography>
+                  </Box>
+                  <Box sx={{ flex: 1, p: 3, pt: 0 }}>
+                    <QueryBuilder brandId={selectedBrand} />
+                  </Box>
+                </CardContent>
+              </Card>
             </Grid>
           </Grid>
         )}

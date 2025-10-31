@@ -64,30 +64,32 @@ const DeliveryPerformance = ({ brandId }) => {
   };
 
   return (
-    <TableContainer component={Paper}>
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell><strong>Canal</strong></TableCell>
-            <TableCell align="right"><strong>Entregas Totais</strong></TableCell>
-            <TableCell align="right"><strong>Tempo Médio (min)</strong></TableCell>
-            <TableCell align="right"><strong>P90 (min)</strong></TableCell>
-            <TableCell align="right"><strong>Taxa de Atraso (%)</strong></TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {data.map((item, index) => (
-            <TableRow key={item.channel || index} hover>
-              <TableCell>{item.channel}</TableCell>
-              <TableCell align="right">{item.total_deliveries}</TableCell>
-              <TableCell align="right">{formatTime(item.avg_time)}</TableCell>
-              <TableCell align="right">{formatTime(item.p90_time)}</TableCell>
-              <TableCell align="right">{((parseFloat(item.delay_rate) || 0).toFixed(1))}%</TableCell>
+    <Box sx={{ height: '100%', overflow: 'auto' }}>
+      <TableContainer component={Paper} sx={{ height: '100%' }}>
+        <Table stickyHeader>
+          <TableHead>
+            <TableRow>
+              <TableCell><strong>Canal</strong></TableCell>
+              <TableCell align="right"><strong>Entregas Totais</strong></TableCell>
+              <TableCell align="right"><strong>Tempo Médio (min)</strong></TableCell>
+              <TableCell align="right"><strong>P90 (min)</strong></TableCell>
+              <TableCell align="right"><strong>Taxa de Atraso (%)</strong></TableCell>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+          </TableHead>
+          <TableBody>
+            {data.map((item, index) => (
+              <TableRow key={item.channel || index} hover>
+                <TableCell>{item.channel}</TableCell>
+                <TableCell align="right">{item.total_deliveries}</TableCell>
+                <TableCell align="right">{formatTime(item.avg_time)}</TableCell>
+                <TableCell align="right">{formatTime(item.p90_time)}</TableCell>
+                <TableCell align="right">{((parseFloat(item.delay_rate) || 0).toFixed(1))}%</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
   );
 };
 

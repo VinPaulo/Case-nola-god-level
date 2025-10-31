@@ -63,38 +63,40 @@ const CustomerRetention = ({ brandId }) => {
   };
 
   return (
-    <TableContainer component={Paper}>
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell><strong>Cliente</strong></TableCell>
-            <TableCell><strong>Email</strong></TableCell>
-            <TableCell align="right"><strong>Total Compras</strong></TableCell>
-            <TableCell align="right"><strong>Valor Total Gasto</strong></TableCell>
-            <TableCell align="right"><strong>Última Compra</strong></TableCell>
-            <TableCell align="right"><strong>Dias Desde Última Compra</strong></TableCell>
-            <TableCell align="right"><strong>Status</strong></TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {data.map((customer, index) => (
-            <TableRow key={customer.customer_name || index} hover>
-              <TableCell>{customer.customer_name}</TableCell>
-              <TableCell>{customer.email}</TableCell>
-              <TableCell align="right">{customer.total_compras}</TableCell>
-              <TableCell align="right">R$ {(parseFloat(customer.valor_total_gasto) || 0).toFixed(2)}</TableCell>
-              <TableCell align="right">{customer.ultima_compra}</TableCell>
-              <TableCell align="right">{customer.dias_desde_ultima_compra}</TableCell>
-              <TableCell align="right">
-                <Typography color={customer.dias_desde_ultima_compra <= 30 ? 'success.main' : customer.dias_desde_ultima_compra <= 90 ? 'warning.main' : 'error.main'}>
-                  {customer.dias_desde_ultima_compra <= 30 ? 'Ativo' : customer.dias_desde_ultima_compra <= 90 ? 'Inativo' : 'Perdido'}
-                </Typography>
-              </TableCell>
+    <Box sx={{ height: '100%', overflow: 'auto' }}>
+      <TableContainer component={Paper} sx={{ height: '100%' }}>
+        <Table stickyHeader>
+          <TableHead>
+            <TableRow>
+              <TableCell><strong>Cliente</strong></TableCell>
+              <TableCell><strong>Email</strong></TableCell>
+              <TableCell align="right"><strong>Total Compras</strong></TableCell>
+              <TableCell align="right"><strong>Valor Total Gasto</strong></TableCell>
+              <TableCell align="right"><strong>Última Compra</strong></TableCell>
+              <TableCell align="right"><strong>Dias Desde Última Compra</strong></TableCell>
+              <TableCell align="right"><strong>Status</strong></TableCell>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+          </TableHead>
+          <TableBody>
+            {data.map((customer, index) => (
+              <TableRow key={customer.customer_name || index} hover>
+                <TableCell>{customer.customer_name}</TableCell>
+                <TableCell>{customer.email}</TableCell>
+                <TableCell align="right">{customer.total_compras}</TableCell>
+                <TableCell align="right">R$ {(parseFloat(customer.valor_total_gasto) || 0).toFixed(2)}</TableCell>
+                <TableCell align="right">{customer.ultima_compra}</TableCell>
+                <TableCell align="right">{customer.dias_desde_ultima_compra}</TableCell>
+                <TableCell align="right">
+                  <Typography color={customer.dias_desde_ultima_compra <= 30 ? 'success.main' : customer.dias_desde_ultima_compra <= 90 ? 'warning.main' : 'error.main'}>
+                    {customer.dias_desde_ultima_compra <= 30 ? 'Ativo' : customer.dias_desde_ultima_compra <= 90 ? 'Inativo' : 'Perdido'}
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
   );
 };
 

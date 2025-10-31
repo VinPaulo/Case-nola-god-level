@@ -70,36 +70,38 @@ const Anomalies = ({ brandId }) => {
   };
 
   return (
-    <TableContainer component={Paper}>
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell><strong>Data</strong></TableCell>
-            <TableCell><strong>Vendas</strong></TableCell>
-            <TableCell><strong>Receita</strong></TableCell>
-            <TableCell><strong>Ticket Médio</strong></TableCell>
-            <TableCell><strong>Anomalia</strong></TableCell>
-            <TableCell><strong>Variação Vendas (%)</strong></TableCell>
-            <TableCell><strong>Variação Receita (%)</strong></TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {data.map((anomaly, index) => (
-            <TableRow key={anomaly.data || index} hover>
-              <TableCell>{anomaly.data}</TableCell>
-              <TableCell>{anomaly.vendas}</TableCell>
-              <TableCell>R$ {(parseFloat(anomaly.receita) || 0).toFixed(2)}</TableCell>
-              <TableCell>R$ {(parseFloat(anomaly.ticket_medio) || 0).toFixed(2)}</TableCell>
-              <TableCell>
-                <Chip label={anomaly.anomalia} color={anomaly.anomalia.includes('Queda') ? 'error' : 'warning'} size="small" />
-              </TableCell>
-              <TableCell>{(parseFloat(anomaly.variacao_vendas_pct) || 0).toFixed(1)}%</TableCell>
-              <TableCell>{(parseFloat(anomaly.variacao_receita_pct) || 0).toFixed(1)}%</TableCell>
+    <Box sx={{ height: '100%', overflow: 'auto' }}>
+      <TableContainer component={Paper} sx={{ height: '100%' }}>
+        <Table stickyHeader>
+          <TableHead>
+            <TableRow>
+              <TableCell><strong>Data</strong></TableCell>
+              <TableCell><strong>Vendas</strong></TableCell>
+              <TableCell><strong>Receita</strong></TableCell>
+              <TableCell><strong>Ticket Médio</strong></TableCell>
+              <TableCell><strong>Anomalia</strong></TableCell>
+              <TableCell><strong>Variação Vendas (%)</strong></TableCell>
+              <TableCell><strong>Variação Receita (%)</strong></TableCell>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+          </TableHead>
+          <TableBody>
+            {data.map((anomaly, index) => (
+              <TableRow key={anomaly.data || index} hover>
+                <TableCell>{anomaly.data}</TableCell>
+                <TableCell>{anomaly.vendas}</TableCell>
+                <TableCell>R$ {(parseFloat(anomaly.receita) || 0).toFixed(2)}</TableCell>
+                <TableCell>R$ {(parseFloat(anomaly.ticket_medio) || 0).toFixed(2)}</TableCell>
+                <TableCell>
+                  <Chip label={anomaly.anomalia} color={anomaly.anomalia.includes('Queda') ? 'error' : 'warning'} size="small" />
+                </TableCell>
+                <TableCell>{(parseFloat(anomaly.variacao_vendas_pct) || 0).toFixed(1)}%</TableCell>
+                <TableCell>{(parseFloat(anomaly.variacao_receita_pct) || 0).toFixed(1)}%</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
   );
 };
 
