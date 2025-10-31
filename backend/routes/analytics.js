@@ -469,16 +469,16 @@ router.get('/product-margins', async (req, res) => {
         WHERE s.sale_status_desc = 'COMPLETED'${brandFilter}
         GROUP BY p.id, p.name
       )
-      SELECT 
+      SELECT
         produto,
-        ROUND(preco_medio::numeric, 2) as preco_medio,
-        ROUND(custo_estimado::numeric, 2) as custo_estimado,
-        ROUND((preco_medio - custo_estimado)::numeric, 2) as margem_unitaria,
-        ROUND(((preco_medio - custo_estimado) / preco_medio * 100)::numeric, 2) as margem_percentual,
+        ROUND(COALESCE(preco_medio, 0)::numeric, 2) as preco_medio,
+        ROUND(COALESCE(custo_estimado, 0)::numeric, 2) as custo_estimado,
+        ROUND(COALESCE((preco_medio - custo_estimado), 0)::numeric, 2) as margem_unitaria,
+        ROUND(COALESCE(((preco_medio - custo_estimado) / NULLIF(preco_medio, 0) * 100), 0)::numeric, 2) as margem_percentual,
         total_vendido,
         vendas_com_produto,
-        ROUND(receita_total::numeric, 2) as receita_total,
-        ROUND((receita_total - (custo_estimado * total_vendido))::numeric, 2) as lucro_total
+        ROUND(COALESCE(receita_total, 0)::numeric, 2) as receita_total,
+        ROUND(COALESCE((receita_total - (custo_estimado * total_vendido)), 0)::numeric, 2) as lucro_total
       FROM product_stats
       ORDER BY margem_percentual ASC
       LIMIT $${brand_id ? 2 : 1}
@@ -496,7 +496,7 @@ router.get('/product-margins', async (req, res) => {
 // Performance de entrega por período
 router.get('/delivery-performance', async (req, res) => {
   try {
-    const { brand_id, days = 30, group_by = 'day' } = req.query;
+    const { brand_id, days = 30, group_by = 'channel' } = req.query;
     const params = [];
     let brandFilter = '';
     if (brand_id) {
@@ -507,7 +507,10 @@ router.get('/delivery-performance', async (req, res) => {
     let groupClause = '';
     let selectClause = '';
     
-    if (group_by === 'hour') {
+    if (group_by === 'channel') {
+      groupClause = 'ch.id, ch.name';
+      selectClause = 'ch.name as channel,';
+    } else if (group_by === 'hour') {
       groupClause = 'EXTRACT(HOUR FROM s.created_at)';
       selectClause = 'EXTRACT(HOUR FROM s.created_at) as hora,';
     } else if (group_by === 'day') {
@@ -519,17 +522,14 @@ router.get('/delivery-performance', async (req, res) => {
     }
     
     const query = `
-      SELECT 
+      SELECT
         ${selectClause}
-        COUNT(*) as total_entregas,
-        ROUND(AVG(s.delivery_seconds / 60.0)::numeric, 2) as tempo_medio_minutos,
-        ROUND(MIN(s.delivery_seconds / 60.0)::numeric, 2) as tempo_minimo_minutos,
-        ROUND(MAX(s.delivery_seconds / 60.0)::numeric, 2) as tempo_maximo_minutos,
-        ROUND(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY s.delivery_seconds / 60.0)::numeric, 2) as mediana_minutos,
-        ROUND(PERCENTILE_CONT(0.9) WITHIN GROUP (ORDER BY s.delivery_seconds / 60.0)::numeric, 2) as p90_minutos,
-        COUNT(*) FILTER (WHERE s.delivery_seconds / 60.0 <= 30) as entregas_rapidas,
-        ROUND((COUNT(*) FILTER (WHERE s.delivery_seconds / 60.0 <= 30)::numeric / COUNT(*)) * 100, 2) as percentual_rapidas
+        COUNT(*) as total_deliveries,
+        COALESCE(ROUND(AVG(s.delivery_seconds / 60.0)::numeric, 2), 0) as avg_time,
+        COALESCE(ROUND(PERCENTILE_CONT(0.9) WITHIN GROUP (ORDER BY s.delivery_seconds / 60.0)::numeric, 2), 0) as p90_time,
+        ROUND((COUNT(*) FILTER (WHERE s.delivery_seconds / 60.0 > 30)::numeric / NULLIF(COUNT(*), 0)) * 100, 2) as delay_rate
       FROM sales s
+      JOIN channels ch ON s.channel_id = ch.id
       LEFT JOIN stores st ON s.store_id = st.id
       WHERE s.sale_status_desc = 'COMPLETED'
         AND s.delivery_seconds IS NOT NULL
@@ -681,9 +681,9 @@ router.get('/anomalies', async (req, res) => {
 router.get('/top-products-by-weekday', async (req, res) => {
   try {
     const { brand_id, limit = 5 } = req.query;
-    
+
     let query = `
-      SELECT 
+      SELECT
         TO_CHAR(s.created_at, 'Dy') AS dia_semana,
         EXTRACT(DOW FROM s.created_at)::int AS dia_numero,
         p.name as product_name,
@@ -696,20 +696,20 @@ router.get('/top-products-by-weekday', async (req, res) => {
       LEFT JOIN stores st ON s.store_id = st.id
       WHERE s.sale_status_desc = 'COMPLETED'
     `;
-    
+
     const params = [];
     if (brand_id) {
       query += ` AND st.brand_id = $1`;
       params.push(brand_id);
     }
-    
+
     query += `
       GROUP BY TO_CHAR(s.created_at, 'Dy'), EXTRACT(DOW FROM s.created_at), p.id, p.name
       ORDER BY dia_numero, total_revenue DESC
     `;
-    
+
     const result = await db.query(query, params);
-    
+
     // Agrupar por dia da semana e pegar os top produtos de cada dia
     const groupedByDay = {};
     result.rows.forEach(row => {
@@ -725,11 +725,186 @@ router.get('/top-products-by-weekday', async (req, res) => {
         });
       }
     });
-    
+
     res.json(groupedByDay);
   } catch (error) {
     console.error('Erro ao buscar top produtos por dia da semana:', error);
     res.status(500).json({ error: 'Falha ao buscar top produtos por dia da semana' });
+  }
+});
+
+// Consultas personalizadas
+router.post('/custom', async (req, res) => {
+  try {
+    const { metrics, dimensions, filters, brand_id, limit = 100 } = req.body;
+
+    if (!metrics || !dimensions || metrics.length === 0 || dimensions.length === 0) {
+      return res.status(400).json({ error: 'Métricas e dimensões são obrigatórias' });
+    }
+
+    // Construir SELECT
+    let selectParts = [];
+    let groupByParts = [];
+    let joins = [];
+    let whereParts = ['s.sale_status_desc = \'COMPLETED\''];
+    const params = [];
+
+    // Processar dimensões
+    dimensions.forEach(dim => {
+      switch (dim) {
+        case 'channel':
+          selectParts.push('ch.name as channel');
+          groupByParts.push('ch.name');
+          joins.push('JOIN channels ch ON s.channel_id = ch.id');
+          break;
+        case 'store':
+          selectParts.push('st.name as store');
+          groupByParts.push('st.id, st.name');
+          joins.push('LEFT JOIN stores st ON s.store_id = st.id');
+          break;
+        case 'product':
+          selectParts.push('p.name as product');
+          groupByParts.push('p.id, p.name');
+          joins.push('JOIN product_sales ps ON ps.sale_id = s.id');
+          joins.push('JOIN products p ON ps.product_id = p.id');
+          break;
+        case 'weekday':
+          selectParts.push('TO_CHAR(s.created_at, \'Dy\') as weekday');
+          groupByParts.push('TO_CHAR(s.created_at, \'Dy\')');
+          break;
+        case 'hour':
+          selectParts.push('EXTRACT(HOUR FROM s.created_at) as hour');
+          groupByParts.push('EXTRACT(HOUR FROM s.created_at)');
+          break;
+        case 'date':
+          selectParts.push('DATE(s.created_at) as date');
+          groupByParts.push('DATE(s.created_at)');
+          break;
+      }
+    });
+
+    // Processar métricas
+    metrics.forEach(metric => {
+      switch (metric) {
+        case 'sales':
+          selectParts.push('COUNT(DISTINCT s.id) as sales');
+          break;
+        case 'revenue':
+          selectParts.push('SUM(s.total_amount) as revenue');
+          break;
+        case 'average_ticket':
+          selectParts.push('AVG(s.total_amount) as average_ticket');
+          break;
+        case 'products_sold':
+          if (!joins.includes('JOIN product_sales ps ON ps.sale_id = s.id')) {
+            joins.push('JOIN product_sales ps ON ps.sale_id = s.id');
+          }
+          selectParts.push('SUM(ps.quantity) as products_sold');
+          break;
+        case 'delivery_time':
+          selectParts.push('AVG(s.delivery_seconds / 60.0) as delivery_time');
+          whereParts.push('s.delivery_seconds IS NOT NULL');
+          break;
+      }
+    });
+
+    // Garantir join com stores se brand_id for fornecido
+    if (brand_id && !joins.includes('LEFT JOIN stores st ON s.store_id = st.id')) {
+      joins.push('LEFT JOIN stores st ON s.store_id = st.id');
+    }
+
+    // Adicionar brand filter se fornecido
+    if (brand_id) {
+      whereParts.push('st.brand_id = $' + (params.length + 1));
+      params.push(brand_id);
+    }
+
+    // Processar filtros
+    if (filters) {
+      if (filters.start_date) {
+        whereParts.push('s.created_at >= $' + (params.length + 1));
+        params.push(filters.start_date);
+      }
+      if (filters.end_date) {
+        whereParts.push('s.created_at <= $' + (params.length + 1));
+        params.push(filters.end_date + ' 23:59:59');
+      }
+      if (filters.channel_id) {
+        whereParts.push('s.channel_id = $' + (params.length + 1));
+        params.push(filters.channel_id);
+      }
+      if (filters.store_id) {
+        whereParts.push('s.store_id = $' + (params.length + 1));
+        params.push(filters.store_id);
+      }
+      if (filters.product_id) {
+        if (!joins.includes('JOIN product_sales ps ON ps.sale_id = s.id')) {
+          joins.push('JOIN product_sales ps ON ps.sale_id = s.id');
+        }
+        if (dimensions.includes('product')) {
+          whereParts.push('p.id = $' + (params.length + 1));
+        } else {
+          joins.push('JOIN products p_filter ON ps.product_id = p_filter.id');
+          whereParts.push('p_filter.id = $' + (params.length + 1));
+        }
+        params.push(filters.product_id);
+      }
+      if (filters.hour_range && filters.hour_range.length === 2) {
+        whereParts.push('EXTRACT(HOUR FROM s.created_at) BETWEEN $' + (params.length + 1) + ' AND $' + (params.length + 2));
+        params.push(filters.hour_range[0], filters.hour_range[1]);
+      }
+    }
+
+    // Construir query
+    let query = `
+      SELECT ${selectParts.join(', ')}
+      FROM sales s
+      ${joins.join(' ')}
+      WHERE ${whereParts.join(' AND ')}
+    `;
+
+    if (groupByParts.length > 0) {
+      query += ` GROUP BY ${groupByParts.join(', ')}`;
+    }
+
+    // Determinar ORDER BY: primeiro por métrica, senão primeira dimensão
+    let orderBySelect = selectParts.find(part => {
+      const metricAliases = ['sales', 'revenue', 'average_ticket', 'products_sold', 'delivery_time'];
+      return metricAliases.some(alias => part.includes(` as ${alias}`));
+    }) || selectParts[0];
+
+    let orderBy = orderBySelect.split(' as ')[0];
+    query += ` ORDER BY ${orderBy} DESC LIMIT $${params.length + 1}`;
+    params.push(limit);
+
+    console.log('Generated Query:', query);
+    console.log('Params:', params);
+
+    const result = await db.query(query, params);
+
+    // Formatar resultado
+    const formattedData = result.rows.map(row => {
+      const formattedRow = {};
+      Object.keys(row).forEach(key => {
+        if (typeof row[key] === 'number') {
+          formattedRow[key] = parseFloat(row[key].toFixed(2));
+        } else {
+          formattedRow[key] = row[key];
+        }
+      });
+      return formattedRow;
+    });
+
+    res.json({
+      query: query.replace(/\s+/g, ' ').trim(),
+      dimensions,
+      metrics,
+      data: formattedData
+    });
+
+  } catch (error) {
+    console.error('Erro ao executar consulta personalizada:', error);
+    res.status(500).json({ error: 'Falha ao executar consulta personalizada' });
   }
 });
 

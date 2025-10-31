@@ -28,7 +28,7 @@ const ProductMargins = ({ brandId }) => {
   const loadMarginsData = async () => {
     try {
       setLoading(true);
-      const response = await api.get(`/analytics/product-margins?brand_id=${brandId}&limit=10`);
+      const response = await api.get(`/analytics/product-margins?brand_id=${brandId}`);
       setData(response.data);
     } catch (err) {
       setError('Erro ao carregar margens de produtos');
@@ -59,14 +59,13 @@ const ProductMargins = ({ brandId }) => {
   }
 
   const formatCurrency = (value) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value || 0);
+    const num = parseFloat(value) || 0;
+    return `R$ ${num.toFixed(2)}`;
   };
 
   const formatPercentage = (value) => {
-    return `${(value || 0).toFixed(1)}%`;
+    const num = parseFloat(value) || 0;
+    return `${num.toFixed(1)}%`;
   };
 
   return (
@@ -75,32 +74,24 @@ const ProductMargins = ({ brandId }) => {
         <TableHead>
           <TableRow>
             <TableCell><strong>Produto</strong></TableCell>
-            <TableCell align="right"><strong>Preço Médio</strong></TableCell>
-            <TableCell align="right"><strong>Margem %</strong></TableCell>
+            <TableCell align="right"><strong>Vendas Totais</strong></TableCell>
+            <TableCell align="right"><strong>Receita Total</strong></TableCell>
+            <TableCell align="right"><strong>Custo Estimado</strong></TableCell>
+            <TableCell align="right"><strong>Margem Unitária</strong></TableCell>
+            <TableCell align="right"><strong>Margem Percentual</strong></TableCell>
             <TableCell align="right"><strong>Lucro Total</strong></TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
           {data.map((product, index) => (
             <TableRow key={product.produto || index} hover>
-              <TableCell>
-                <Typography variant="body2" noWrap sx={{ maxWidth: 250 }}>
-                  {product.produto || 'Produto'}
-                </Typography>
-              </TableCell>
-              <TableCell align="right">
-                {formatCurrency(product.preco_medio)}
-              </TableCell>
-              <TableCell align="right">
-                <Typography color={product.margem_percentual < 20 ? 'error.main' : 'success.main'}>
-                  {formatPercentage(product.margem_percentual)}
-                </Typography>
-              </TableCell>
-              <TableCell align="right">
-                <Typography variant="body2" color="success.main" fontWeight="bold">
-                  {formatCurrency(product.lucro_total)}
-                </Typography>
-              </TableCell>
+              <TableCell>{product.produto}</TableCell>
+              <TableCell align="right">{product.total_vendido}</TableCell>
+              <TableCell align="right">{formatCurrency(product.receita_total)}</TableCell>
+              <TableCell align="right">{formatCurrency(product.custo_estimado)}</TableCell>
+              <TableCell align="right">{formatCurrency(product.margem_unitaria)}</TableCell>
+              <TableCell align="right">{formatPercentage(product.margem_percentual)}</TableCell>
+              <TableCell align="right">{formatCurrency(product.lucro_total)}</TableCell>
             </TableRow>
           ))}
         </TableBody>

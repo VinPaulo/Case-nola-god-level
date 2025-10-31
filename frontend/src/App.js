@@ -37,6 +37,11 @@ import StorePerformance from './components/StorePerformance';
 import HourlyDistribution from './components/HourlyDistribution';
 import SalesSummary from './components/SalesSummary';
 import TopProductsByWeekday from './components/TopProductsByWeekday';
+import QueryBuilder from './components/QueryBuilder';
+import Anomalies from './components/Anomalies';
+import CustomerRetention from './components/CustomerRetention';
+import DeliveryPerformance from './components/DeliveryPerformance';
+import ProductMargins from './components/ProductMargins';
 import { api } from './services/api';
 
 function App() {
@@ -126,7 +131,7 @@ function App() {
           <Toolbar>
             <TrendingUp sx={{ mr: 2 }} />
             <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-              Nola God Level - Analytics Dashboard
+              Nola God Level - Painel de Análises
             </Typography>
             <IconButton color="inherit" onClick={handleThemeToggle}>
               {darkMode ? <Brightness7 /> : <Brightness4 />}
@@ -156,6 +161,8 @@ function App() {
             <Tab icon={<Timeline />} label="Tendências" />
             <Tab icon={<Store />} label="Lojas" />
             <Tab icon={<ShoppingCart />} label="Produtos" />
+            <Tab icon={<TrendingUp />} label="Análises Avançadas" />
+            <Tab icon={<BarChart />} label="Consultas Personalizadas" />
           </Tabs>
         </Box>
 
@@ -270,6 +277,61 @@ function App() {
                   <TopProducts brandId={selectedBrand} />
                 </CardContent>
               </Card>
+            </Grid>
+          </Grid>
+        )}
+
+        {/* --- ANÁLISES AVANÇADAS --- */}
+        {tabValue === 4 && (
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={6}>
+              <Card sx={{ boxShadow: 3, borderRadius: 2 }}>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Detecção de Anomalias
+                  </Typography>
+                  <Anomalies brandId={selectedBrand} />
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Card sx={{ boxShadow: 3, borderRadius: 2 }}>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Retenção de Clientes
+                  </Typography>
+                  <CustomerRetention brandId={selectedBrand} />
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Card sx={{ boxShadow: 3, borderRadius: 2 }}>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Performance de Entrega
+                  </Typography>
+                  <DeliveryPerformance brandId={selectedBrand} />
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Card sx={{ boxShadow: 3, borderRadius: 2 }}>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Margens de Produtos
+                  </Typography>
+                  <ProductMargins brandId={selectedBrand} />
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+        )}
+
+        {/* --- CONSULTAS PERSONALIZADAS --- */}
+        {tabValue === 5 && (
+          <Grid container spacing={3}>
+            <Grid item xs={12}>
+              <QueryBuilder brandId={selectedBrand} />
             </Grid>
           </Grid>
         )}
