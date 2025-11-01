@@ -56,3 +56,4 @@ backend/node_modules
 # start-system.js - Script universal de inicialização
 # stop-system.js - Script universal de parada
 
+.vercel

@@ -26,6 +26,14 @@ const DynamicChart = ({ data, dimensions, metrics, chartType = 'bar' }) => {
     );
   }
 
+  const metricLabels = {
+    sales: 'Vendas',
+    revenue: 'Receita',
+    average_ticket: 'Ticket Médio',
+    products_sold: 'Produtos Vendidos',
+    delivery_time: 'Tempo de Entrega'
+  };
+
   const formatValue = (value) => {
     if (typeof value === 'number') {
       if (value >= 1000000) {
@@ -50,7 +58,7 @@ const DynamicChart = ({ data, dimensions, metrics, chartType = 'bar' }) => {
           <p style={{ margin: 0, fontWeight: 'bold' }}>{label}</p>
           {payload.map((entry, index) => (
             <p key={index} style={{ margin: '5px 0', color: entry.color }}>
-              {`${entry.name}: ${formatValue(entry.value)}`}
+              {`${metricLabels[entry.dataKey] || entry.name}: ${formatValue(entry.value)}`}
             </p>
           ))}
         </div>
@@ -82,7 +90,7 @@ const DynamicChart = ({ data, dimensions, metrics, chartType = 'bar' }) => {
               key={metric}
               dataKey={metric}
               fill={COLORS[index % COLORS.length]}
-              name={metric.replace('_', ' ').toUpperCase()}
+              name={metricLabels[metric] || metric.replace('_', ' ').toUpperCase()}
             />
           ))}
         </BarChart>
@@ -111,7 +119,7 @@ const DynamicChart = ({ data, dimensions, metrics, chartType = 'bar' }) => {
               dataKey={metric}
               stroke={COLORS[index % COLORS.length]}
               strokeWidth={2}
-              name={metric.replace('_', ' ').toUpperCase()}
+              name={metricLabels[metric] || metric.replace('_', ' ').toUpperCase()}
               dot={{ fill: COLORS[index % COLORS.length], strokeWidth: 2, r: 4 }}
             />
           ))}
