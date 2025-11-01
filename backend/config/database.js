@@ -1,23 +1,21 @@
 const { Pool } = require('pg');
 
+// Configuração do pool de conexão com Supabase
 const pool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
-  port: process.env.DB_PORT || 5432,
-  database: process.env.DB_NAME || 'challenge_db',
-  user: process.env.DB_USER || 'challenge',
-  password: process.env.DB_PASSWORD || 'challenge_2024',
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  connectionString: 'postgresql://postgres:paulovin0203@db.emnxkhzmpbvwaktgjmxl.supabase.co:5432/postgres',
+  ssl: { rejectUnauthorized: false }, // obrigatório para Supabase
+  max: 20,                           // máximo de conexões no pool
+  idleTimeoutMillis: 30000,          // tempo máximo de inatividade antes de liberar a conexão
+  connectionTimeoutMillis: 2000      // tempo máximo para tentar conectar
 });
 
 // Teste de conexão
 pool.on('connect', () => {
-  console.log('✅ Conectado ao banco de dados PostgreSQL');
+  console.log('✅ Conectado ao Supabase');
 });
 
 pool.on('error', (err) => {
-  console.error('❌ Erro de conexão com o banco de dados:', err);
+  console.error('❌ Erro no Supabase:', err);
 });
 
 module.exports = pool;
