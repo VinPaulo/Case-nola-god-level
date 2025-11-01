@@ -1,68 +1,28 @@
 version: '3.8'
 
 services:
-  db:
-    image: postgres:14
-    container_name: nola_db
-    restart: always
-    environment:
-      POSTGRES_DB: nola_db
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./database-schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d nola_db"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   backend:
-    image: node:18-alpine
-    container_name: nola_backend
-    restart: always
-    working_dir: /app
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: godlevel-backend
+    environment:
+      DATABASE_URL: postgresql://challenge:challenge_2024@host_do_seu_db:5432/challenge_db
+      NODE_ENV: development
     ports:
       - "3001:3001"
-    command: sh -c "npm install && npm start"
-    depends_on:
-      db:
-        condition: service_healthy
-    environment:
-      DATABASE_URL: postgresql://user:password@db:5432/nola_db
-      JWT_SECRET: your-super-secret-jwt-key-change-in-production
-      NODE_ENV: development
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+    command: sh -c "npm install && npm run dev"
 
   frontend:
-    image: node:18-alpine
-    container_name: nola_frontend
-    restart: always
-    working_dir: /app
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    ports:
-      - "8080:3000"
-    command: sh -c "npm install && npm start"
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: godlevel-frontend
     depends_on:
       - backend
     environment:
+      REACT_APP_API_URL: http://backend:3001/api
       CHOKIDAR_USEPOLLING: true
-      REACT_APP_API_URL: http://localhost:3001
-    stdin_open: true
-    tty: true
-
-volumes:
-  postgres_data:
+    ports:
+      - "8080:3000"
+    command: sh -c "npm install && npm start"
