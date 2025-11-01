@@ -3,19 +3,14 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const { Pool } = require('pg');
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
 
-// Configuração do banco PostgreSQL (Railway, Supabase, etc.)
+// Configuração do banco PostgreSQL (Vercel, Railway, Supabase, etc.)
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
     rejectUnauthorized: false
   }
 });
-
-// JWT Secret
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret';
 
 const app = express();
 
@@ -30,66 +25,12 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Auth middleware
-const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+// ------------------------
+// Rotas públicas
+// ------------------------
 
-  if (!token) {
-    return res.status(401).json({ error: 'Token não fornecido' });
-  }
-
-  jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) {
-      return res.status(403).json({ error: 'Token inválido' });
-    }
-    req.user = user;
-    next();
-  });
-};
-
-// Routes
-app.post('/api/auth/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    const result = await pool.query(
-      'SELECT id, email, password_hash, role FROM users WHERE email = $1',
-      [email]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(401).json({ error: 'Credenciais inválidas' });
-    }
-
-    const user = result.rows[0];
-    const isValidPassword = await bcrypt.compare(password, user.password_hash);
-
-    if (!isValidPassword) {
-      return res.status(401).json({ error: 'Credenciais inválidas' });
-    }
-
-    const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
-      JWT_SECRET,
-      { expiresIn: '24h' }
-    );
-
-    res.json({
-      token,
-      user: {
-        id: user.id,
-        email: user.email,
-        role: user.role
-      }
-    });
-  } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ error: 'Erro interno do servidor' });
-  }
-});
-
-app.get('/api/brands', authenticateToken, async (req, res) => {
+// Brands públicas
+app.get('/api/brands', async (req, res) => {
   try {
     const result = await pool.query('SELECT id, name FROM brands ORDER BY name');
     res.json(result.rows);
@@ -99,11 +40,14 @@ app.get('/api/brands', authenticateToken, async (req, res) => {
   }
 });
 
-app.get('/api/analytics/alerts', authenticateToken, async (req, res) => {
+// ------------------------
+// Rotas de analytics e vendas
+// ------------------------
+
+app.get('/api/analytics/alerts', async (req, res) => {
   try {
     const { brand_id, role } = req.query;
 
-    // Lógica simplificada de alertas - em produção, implemente regras de negócio
     const alerts = [
       {
         type: 'warning',
@@ -119,7 +63,6 @@ app.get('/api/analytics/alerts', authenticateToken, async (req, res) => {
       }
     ];
 
-    // Filtrar por role se necessário
     const filteredAlerts = role === 'socio' ? alerts : alerts.slice(0, 1);
 
     res.json(filteredAlerts);
@@ -129,8 +72,7 @@ app.get('/api/analytics/alerts', authenticateToken, async (req, res) => {
   }
 });
 
-// Sales summary
-app.get('/api/sales/summary', authenticateToken, async (req, res) => {
+app.get('/api/sales/summary', async (req, res) => {
   try {
     const { brand_id } = req.query;
 
@@ -157,8 +99,7 @@ app.get('/api/sales/summary', authenticateToken, async (req, res) => {
   }
 });
 
-// Revenue by day
-app.get('/api/analytics/revenue-by-day', authenticateToken, async (req, res) => {
+app.get('/api/analytics/revenue-by-day', async (req, res) => {
   try {
     const { brand_id, days = 30 } = req.query;
 
@@ -181,8 +122,7 @@ app.get('/api/analytics/revenue-by-day', authenticateToken, async (req, res) => 
   }
 });
 
-// Top products
-app.get('/api/analytics/top-products', authenticateToken, async (req, res) => {
+app.get('/api/analytics/top-products', async (req, res) => {
   try {
     const { brand_id, limit = 10 } = req.query;
 
@@ -209,8 +149,7 @@ app.get('/api/analytics/top-products', authenticateToken, async (req, res) => {
   }
 });
 
-// Revenue by channel
-app.get('/api/analytics/revenue-by-channel', authenticateToken, async (req, res) => {
+app.get('/api/analytics/revenue-by-channel', async (req, res) => {
   try {
     const { brand_id } = req.query;
 
@@ -235,24 +174,20 @@ app.get('/api/analytics/revenue-by-channel', authenticateToken, async (req, res)
   }
 });
 
-// Custom analytics query
-app.post('/api/analytics/custom', authenticateToken, async (req, res) => {
+app.post('/api/analytics/custom', async (req, res) => {
   try {
     const { metrics, dimensions, filters, brand_id, limit = 100 } = req.body;
 
-    // Construir query dinamicamente (simplificada)
     let selectParts = [];
     let groupBy = [];
     let whereConditions = ['s.brand_id = $1'];
     let params = [brand_id];
     let paramIndex = 2;
 
-    // Métricas
     if (metrics.includes('sales')) selectParts.push('COUNT(s.id) as sales');
     if (metrics.includes('revenue')) selectParts.push('SUM(s.total_amount) as revenue');
     if (metrics.includes('average_ticket')) selectParts.push('AVG(s.total_amount) as average_ticket');
 
-    // Dimensões
     if (dimensions.includes('channel')) {
       selectParts.push('c.name as channel');
       groupBy.push('c.id, c.name');
@@ -266,7 +201,6 @@ app.post('/api/analytics/custom', authenticateToken, async (req, res) => {
       groupBy.push('DATE(s.created_at)');
     }
 
-    // Filtros
     if (filters.start_date) {
       whereConditions.push(`s.created_at >= $${paramIndex}`);
       params.push(filters.start_date);
