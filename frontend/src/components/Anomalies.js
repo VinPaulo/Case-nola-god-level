@@ -15,6 +15,8 @@ import {
 } from '@mui/material';
 import { api } from '../services/api';
 
+//Subindo teste no Vercel
+
 const Anomalies = ({ brandId }) => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
