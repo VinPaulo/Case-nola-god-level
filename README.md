@@ -195,9 +195,4 @@ docker compose up -d
 ```
 
 
-## 👥 Contato
-
-paulovinaudmoreira@gmail.com
-
-
 Desenvolvido com <3 para demonstrar excelência em desenvolvimento full-stack OBS: NÃO FOQUEI NO PRÊMIO, E SIM EM CONSEGUIR UM ESTÁGIO :)
