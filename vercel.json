@@ -2,23 +2,21 @@
   "version": 2,
   "builds": [
     {
-      "src": "backend/package.json",
+      "src": "backend/vercel-deploy.js",
       "use": "@vercel/node"
     },
     {
       "src": "frontend/package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "build",
-        "installCommand": "npm install",
-        "buildCommand": "npm run build"
+        "distDir": "build"
       }
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/backend/$1"
+      "dest": "/backend/vercel-deploy.js"
     },
     {
       "src": "/(.*)",
@@ -27,6 +25,7 @@
   ],
   "env": {
     "NODE_ENV": "production",
-    "DATABASE_URL": "@database-url"
+    "CI": "false",
+    "DATABASE_URL": "postgresql://postgres:paulovin0203@db.emnxkhzmpbvwaktgjmxl.supabase.co:5432/postgres"
   }
 }

@@ -88,8 +88,8 @@ serve -s build
 ```
 
 ### 5. Acessar a Aplicação
-- **Frontend**: http://localhost:(porta aleatória gerada pelo builder)
-- **Backend API**: http://localhost:3001
+- **Frontend**: http://localhost:(porta aleatória gerada pelo builder) / https://case-nola-god-level.vercel.app/
+- **Backend API**: http://localhost:3001 / 
 
 ## 📁 Estrutura do Projeto
 
@@ -143,9 +143,9 @@ O banco PostgreSQL é configurado automaticamente via Docker Compose. O schema i
 ## 🎨 Personalização
 
 ### Roles de Usuário
-- **Sócio**: Acesso completo a todos os dados
-- **Gerente**: Foco em performance operacional
-- **Marketing**: Métricas de vendas e clientes
+- **Sócio**: Acesso completo a todos os dados - Implementação futura
+- **Gerente**: Foco em performance operacional - Implementação futura
+- **Marketing**: Métricas de vendas e clientes - Implementação futura
 
 ### Temas
 - Modo claro/escuro integrado
@@ -179,7 +179,7 @@ npm run lint        # Verificar código
 ```bash
 cd frontend
 npm install         # Instalar dependências
-npm start          # Iniciar desenvolvimento (localhost:3000)
+npm start          # Iniciar desenvolvimento
 npm run build      # Build de produção
 npm test           # Executar testes
 npm run eject      # Ejetar Create React App
@@ -195,13 +195,9 @@ docker compose up -d
 ```
 
 
-## 📄 Licença
-
-Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para mais detalhes.
-
 ## 👥 Contato
 
 paulovinaudmoreira@gmail.com
 
 
-Desenvolvido com ❤️ para demonstrar excelência em desenvolvimento full-stack OBS: NÃO FOQUEI NO PRÊMIO, E SIM EM CONSEGUIR UM ESTÁGIO :)
+Desenvolvido com <3 para demonstrar excelência em desenvolvimento full-stack OBS: NÃO FOQUEI NO PRÊMIO, E SIM EM CONSEGUIR UM ESTÁGIO :)
