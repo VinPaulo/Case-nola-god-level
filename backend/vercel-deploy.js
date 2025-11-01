@@ -5,16 +5,37 @@ const morgan = require('morgan');
 const { Pool } = require('pg');
 
 // Configuração do banco PostgreSQL (Vercel, Railway, Supabase, etc.)
+console.log('DATABASE_URL length:', process.env.DATABASE_URL ? process.env.DATABASE_URL.length : 'undefined');
+
 if (!process.env.DATABASE_URL) {
   throw new Error('DATABASE_URL environment variable is required');
 }
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: process.env.DATABASE_URL?.trim(),
   ssl: {
     rejectUnauthorized: false
   }
 });
+
+// Test connection on startup
+pool.on('connect', () => {
+  console.log('✅ Connected to database');
+});
+
+pool.on('error', (err) => {
+  console.error('❌ Database connection error:', err.message);
+});
+
+// Test query on startup
+(async () => {
+  try {
+    await pool.query('SELECT 1');
+    console.log('✅ Database connection test successful');
+  } catch (err) {
+    console.error('❌ Database test query failed:', err.message);
+  }
+})();
 
 const app = express();
 
