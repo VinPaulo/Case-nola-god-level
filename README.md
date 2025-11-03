@@ -64,17 +64,40 @@ Criar um dashboard de analytics que permita à Maria, proprietária de três res
 
 ## 🚀 Instalação e Execução
 
+### Solução de Problemas com Docker no Windows
+Se o comando `docker compose up -d postgres` falhar com erro de pipe:
+1. Instale Docker Desktop de https://www.docker.com/products/docker-desktop
+2. Reinicie o PC após instalação
+3. Execute `docker --version` para verificar
+4. Tente novamente o comando
+
+
 ### Inicialização com Docker (Recomendada)
 
 ```bash
-# Clone o repositório (se aplicável)
-git clone <repository-url>
+# Clone o repositório
+git clone https://github.com/VinPaulo/Case-nola-god-level
 cd nola-god-level
 
-# Inicialização completa do sistema
-docker compose up -d postgres data-generator api frontend
+# Build do gerador de dados (opcional, para garantir cache limpo)
+docker compose build --no-cache data-generator
+
+# Subir banco de dados
+docker compose up -d postgres
+
+# Executar gerador de dados
+docker compose run --rm data-generator python generate_data.py --db-url postgresql://challenge:challenge_2024@postgres:5432/challenge_db
+
+# Subir pgAdmin para administração do banco (opcional)
+docker compose --profile tools up -d pgadmin
+
+# Inicialização completa do sistema (API + Frontend)
+docker compose up -d api frontend
 
 # Aguardar alguns minutos para inicialização completa
+
+# Verificar se os dados foram gerados
+docker compose exec postgres psql -U challenge -d challenge_db -c 'SELECT COUNT(*) FROM sales;'
 
 # Acessar o dashboard
 # http://localhost:3001
@@ -87,7 +110,7 @@ docker compose up -d postgres data-generator api frontend
 docker compose up -d postgres
 
 # 2. Executar o gerador de dados
-docker compose run --rm data-generator
+docker compose run --rm data-generator python generate_data.py --db-url postgresql://challenge:challenge_2024@postgres:5432/challenge_db
 
 # 3. Criar uma brand inicial - exemplo
 # docker exec -it godlevel-db psql -U challenge -d challenge_db -c "INSERT INTO brands (name) VALUES ('Paulo`s Solution');"
@@ -332,4 +355,4 @@ docker compose -f docker-compose.prod.yml -f docker-compose.nginx.yml up -d
 
 ---
 
-**Desenvolvido com ❤️ para demonstrar excelência em desenvolvimento full-stack OBS: NÃO FOQUEI NO PRÊMIO, E SIM EM CONSEGUIR UM ESTÁGIO :)**
+**Desenvolvido com <3 para demonstrar excelência em desenvolvimento full-stack OBS: NÃO FOQUEI NO PRÊMIO, E SIM EM CONSEGUIR UM ESTÁGIO :)**

@@ -6,6 +6,7 @@ Generates realistic restaurant data based on Arcca's actual models
 
 import random
 import argparse
+import os
 from datetime import datetime, timedelta
 from decimal import Decimal
 import psycopg2
@@ -684,13 +685,18 @@ def main():
     
     args = parser.parse_args()
     
+    db_url = args.db_url
+    if os.getenv('DB_HOST'):
+        db_url = f"postgresql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:5432/{os.getenv('DB_NAME')}"
+    
     print("=" * 70)
     print("God Level Coder Challenge - Data Generator")
     print("=" * 70)
     print(f"Generating {args.months} months of restaurant operational data...")
+    print(f"Using DB URL: {db_url}")
     print()
     
-    conn = get_db_connection(args.db_url)
+    conn = get_db_connection(db_url)
     
     try:
         sub_brand_ids, channels = setup_base_data(conn)
