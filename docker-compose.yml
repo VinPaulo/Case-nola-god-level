@@ -1,13 +1,43 @@
-version: "3.9"
-
 services:
   postgres:
+    image: postgres:15
+    container_name: godlevel-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: challenge_db
+      POSTGRES_USER: challenge
+      POSTGRES_PASSWORD: challenge_2024
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database-schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U challenge -d challenge_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  data-generator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: godlevel-data-generator
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_NAME: challenge_db
+      DB_USER: challenge
+      DB_PASSWORD: challenge_2024
+
+  api:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: godlevel-analytics-api
     ports:
-      - "4000:3000"
+      - "3000:3000"
     environment:
       DB_HOST: postgres
       DB_NAME: challenge_db
@@ -15,8 +45,8 @@ services:
       DB_PASSWORD: challenge_2024
       PORT: 3000
     depends_on:
-      postgres:
-        condition: service_healthy
+      data-generator:
+        condition: service_completed_successfully
     volumes:
       - ./backend:/app
       - /app/node_modules
@@ -27,9 +57,9 @@ services:
       dockerfile: Dockerfile
     container_name: godlevel-dashboard
     ports:
-      - "8080:3000"
+      - "3001:3000"
     environment:
-      REACT_APP_API_URL: http://localhost:3000
+      REACT_APP_API_URL: http://host.docker.internal:3000
     depends_on:
       - api
     volumes:
@@ -46,7 +76,7 @@ services:
     ports:
       - "8081:80"
     depends_on:
-      - api
+      - frontend
     restart: unless-stopped
 
 volumes:

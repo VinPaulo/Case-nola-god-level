@@ -64,41 +64,43 @@ Criar um dashboard de analytics que permita à Maria, proprietária de três res
 
 ## 🚀 Instalação e Execução
 
-### Inicialização Automática (Recomendada)
+### Inicialização com Docker (Recomendada)
 
 ```bash
 # Clone o repositório (se aplicável)
 git clone <repository-url>
 cd nola-god-level
 
-# Inicialização completa em um comando
-node start-system.js
+# Inicialização completa do sistema
+docker compose up -d postgres data-generator api frontend
 
-# Validação do sistema
-node validate-system.js
+# Aguardar alguns minutos para inicialização completa
 
-# Parar sistema
-node stop-system.js
+# Acessar o dashboard
+# http://localhost:3001
 ```
 
 ### Inicialização Manual
 
 ```bash
 # 1. Subir o banco de dados
-docker-compose up -d postgres
+docker compose up -d postgres
 
 # 2. Executar o gerador de dados
-docker-compose run --rm data-generator
+docker compose run --rm data-generator
 
-# 3. Subir a API
-docker-compose up -d api
+# 3. Criar uma brand inicial - exemplo
+# docker exec -it godlevel-db psql -U challenge -d challenge_db -c "INSERT INTO brands (name) VALUES ('Paulo`s Solution');"
 
-# 4. Iniciar o frontend (em outro terminal)
+# 4. Subir a API
+docker compose up -d api
+
+# 5. Iniciar o frontend (em outro terminal)
 cd frontend
 npm install
 npm start
 
-# 5. Acessar o dashboard
+# 6. Acessar o dashboard
 # http://localhost:3001
 ```
 
@@ -122,14 +124,13 @@ npm start
 
 ```bash
 # 1. Subir banco de dados
-docker-compose up -d postgres
+docker compose up -d postgres
 
 # 2. Executar gerador de dados
-docker-compose run --rm data-generator
+docker compose run --rm data-generator
 
 # 3. Iniciar API
-cd backend
-npm start
+docker compose up -d api
 
 # 4. Testar endpoints
 curl http://localhost:3000/api/health
@@ -247,7 +248,7 @@ O schema está definido em `database-schema.sql`:
 
 ```bash
 # Executar gerador de dados
-docker-compose run --rm data-generator
+docker compose run --rm data-generator
 
 # Ou localmente
 python generate_data.py
@@ -276,7 +277,7 @@ curl http://localhost:3000/api/health
 open http://localhost:3001
 
 # Database
-docker-compose exec postgres psql -U postgres -d nola_analytics
+docker compose exec postgres psql -U challenge -d challenge_db
 ```
 
 ## 🚀 Deploy em Produção
@@ -295,10 +296,10 @@ cp .env.example .env
 ### Docker Compose Produção
 ```bash
 # Usar configuração de produção
-docker-compose -f docker-compose.prod.yml up -d
+docker compose -f docker-compose.prod.yml up -d
 
 # Ou com nginx customizado
-docker-compose -f docker-compose.prod.yml -f docker-compose.nginx.yml up -d
+docker compose -f docker-compose.prod.yml -f docker-compose.nginx.yml up -d
 ```
 
 ### Configurações de Produção
