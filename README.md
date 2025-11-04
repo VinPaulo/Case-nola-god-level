@@ -1,4 +1,4 @@
-# 🎯 Nola God Level - Restaurant Analytics Dashboard
+# 🎯 Nola God Level - Dashboard de análise de restaurantes
 
 ## 📋 Visão Geral
 
@@ -103,6 +103,118 @@ docker compose exec postgres psql -U challenge -d challenge_db -c 'SELECT COUNT(
 # http://localhost:3001
 ```
 
+## 🔧 Comandos Docker
+Esta seção contém comandos úteis para resolver problemas comuns com Docker. Explicamos de forma simples o que cada comando faz e quando usá-lo.
+
+### Problemas Comuns e Soluções
+
+#### 1. **Erro ao subir serviços (containers não iniciam)**
+```bash
+# Parar todos os serviços em execução
+docker compose down
+
+# Limpar imagens e caches não utilizados (libera espaço)
+docker system prune -f
+
+# Rebuildar um serviço específico (exemplo: data-generator)
+docker compose build data-generator
+
+# Subir os serviços novamente
+docker compose up -d
+```
+
+#### 2. **Problemas com o banco de dados PostgreSQL**
+```bash
+# Ver os logs do banco de dados para identificar erros
+docker compose logs postgres
+
+# Reiniciar apenas o banco de dados
+docker compose restart postgres
+
+# Entrar no banco para executar comandos SQL diretamente
+docker compose exec postgres psql -U challenge -d challenge_db
+```
+
+#### 3. **API não responde ou dá erro**
+```bash
+# Ver logs da API para ver mensagens de erro
+docker compose logs api
+
+# Reiniciar a API
+docker compose restart api
+
+# Testar se a API está funcionando (deve retornar status)
+curl http://localhost:3000/api/health
+```
+
+#### 4. **Frontend não carrega no navegador**
+```bash
+# Ver logs do frontend
+docker compose logs frontend
+
+# Reiniciar o frontend
+docker compose restart frontend
+
+# Verificar se a porta 3001 está sendo usada por outro programa
+netstat -an | find "3001"
+```
+
+#### 5. **Dados não foram gerados ou estão faltando**
+```bash
+# Executar o gerador de dados novamente
+docker compose run --rm data-generator 
+
+# Verificar quantos registros existem na tabela de vendas
+docker compose exec postgres psql -U challenge -d challenge_db -c 'SELECT COUNT(*) FROM sales;'
+```
+
+#### 6. **Limpeza completa do sistema**
+```bash
+# Parar serviços e remover containers, volumes e redes
+docker compose down -v
+
+# Limpar imagens, containers e volumes não utilizados
+docker system prune -f
+docker volume prune -f
+```
+
+#### 7. **Atualizar imagens e rebuildar tudo**
+```bash
+# Baixar as últimas versões das imagens do Docker Hub
+docker compose pull
+
+# Rebuildar todos os serviços do zero (ignora cache)
+docker compose build --no-cache
+```
+
+#### 8. **Verificar status dos serviços**
+```bash
+# Listar todos os containers e seu status
+docker compose ps
+
+# Ver logs de todos os serviços de uma vez
+docker compose logs
+```
+
+#### 9. **Gerenciar pgAdmin (ferramenta opcional para visualizar banco)**
+```bash
+# Subir pgAdmin para administração visual do banco
+docker compose --profile tools up -d pgadmin
+
+# Ver logs do pgAdmin
+docker compose logs pgadmin
+
+# Parar pgAdmin
+docker compose --profile tools down pgadmin
+```
+
+### Dicas Gerais
+- **Sempre verifique logs primeiro**: Use `docker compose logs [serviço]` para entender o erro
+- **Reinicie serviços específicos**: Evite parar tudo se só um serviço está com problema
+- **Limpe regularmente**: Execute `docker system prune` para liberar espaço em disco
+- **Verifique portas**: Certifique-se que portas 3000 (API) e 3001 (frontend) não estão ocupadas
+- **Banco de dados**: Se o PostgreSQL não conectar, aguarde alguns segundos após subir o container
+
 ### Inicialização Manual
 
 ```bash
@@ -203,11 +315,6 @@ Endpoints específicos para cada análise:
 - `/product-margins`
 - `/anomalies`
 
-### Parâmetros Comuns
-- `brand_id`: ID da loja/restaurante
-- `start_date`: Data inicial (YYYY-MM-DD)
-- `end_date`: Data final (YYYY-MM-DD)
-- `limit`: Número máximo de resultados
 
 ### Respostas
 Todas as respostas seguem o formato JSON:
